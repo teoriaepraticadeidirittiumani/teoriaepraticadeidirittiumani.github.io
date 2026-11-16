@@ -86,8 +86,8 @@ table.big td b{font-size:1.05rem}
 table.big td.n{font-size:.9rem}
 .tbtn{width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:12px 14px;border:1px solid var(--line);background:var(--card);border-radius:12px;cursor:pointer;font-size:.98rem;text-align:left}
 .tbtn small{color:var(--mute)}
-.prtabs{margin:10px 0;grid-template-columns:1fr 1fr}.prtabs .pt{display:block;text-transform:uppercase;font-weight:bold;letter-spacing:.03em;font-size:.86rem}.prtabs .ps{display:block;font-style:italic;font-size:.92rem;margin-top:2px}
-.note.ore{margin:2px 2px 10px;line-height:1.55}.prtabs button{white-space:normal;line-height:1.2;padding-top:8px;padding-bottom:8px}.prtabs #prnew{border-style:dashed}
+.prtabs{margin:10px 0;grid-template-columns:1fr 1fr}.prtabs .pt{display:block;text-transform:uppercase;font-weight:bold;letter-spacing:.03em;font-size:.72rem}.prtabs .ps{display:block;font-style:italic;font-size:.82rem;margin-top:1px}
+.note.ore{margin:2px 2px 12px;line-height:1.45}.note.ore .od{margin-bottom:6px}.note.ore .od span{color:var(--ink)}.prtabs{gap:6px}.prtabs button{white-space:normal;line-height:1.15;padding:5px 6px;min-height:0}.prtabs #prnew{border-style:dashed;font-size:.8rem;padding:6px}
 .addbox{margin-top:26px;padding-top:12px;border-top:1px solid var(--line);font-size:.85rem}
 .pday{font-weight:bold;margin:16px 4px 2px;padding-bottom:4px;border-bottom:1px solid var(--line)}
 .pday small{color:var(--mute);font-weight:normal}
@@ -104,12 +104,13 @@ table.big td.n{font-size:.9rem}
 .cal.small .axis span{font-size:.6rem}
 .cal.small .ev{font-size:.6rem;padding:0 3px;border-radius:4px}
 .ev.pv{pointer-events:auto;cursor:pointer}
-.cal.pvg .ev{font-size:.8rem;line-height:1.22;padding:4px 6px;font-family:Georgia,"Times New Roman",serif}
+.cal.pvg .ev{font-size:.8rem;line-height:1.18;padding:3px 5px;font-family:Georgia,"Times New Roman",serif}
 .cal.pvg .ev.one{white-space:normal}
 .cal.pvg .ev b{display:block;text-transform:uppercase;font-weight:bold;letter-spacing:.02em;font-size:.74rem}
 .cal.pvg .ev .tm{display:block;margin-top:3px;font-style:normal;font-size:.76rem;line-height:1.2;color:var(--ink)}
 .cal.pvg .head .n{font-size:1.3rem}.cal.pvg .head .w,.cal.pvg .head .m{font-size:.72rem}
 .cal.pvg .axis span{font-size:.72rem}
+.cal.pvg .axis,.cal.pvg .col{margin-top:12px}
 #pgrid{width:100vw;margin-left:calc(50% - 50vw);padding:0 6px;box-sizing:border-box}
 @media(min-width:760px){.cal.pvg .ev{font-size:.95rem;padding:6px 9px}.cal.pvg .ev b{font-size:.9rem}.cal.pvg .ev .tm{font-size:.95rem}#pgrid{padding:0 20px}}
 .cal.pvg .axis span{font-size:.68rem}
@@ -240,7 +241,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     cal:'<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
     el:'<svg viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="17.5" r="1"/></svg>'};
   var LABEL={disp:'Disponibilità',cal:'Calendario',el:'Elenco'};
-  var SUBS={disp:'Scegli se sei da solo o in gruppo, poi scrivi nome, cognome, matricola, argomento e le giornate in cui sei disponibile.',cal:'Tocca l’orario che preferisci, scegli la durata e inserisci il tuo nome e cognome, matricola e argomento.'};
+  var SUBS={disp:'Scegli se sei solo o in gruppo, poi scrivi nome, cognome, matricola, argomento e le giornate in cui sei disponibile.',cal:'Tocca l’orario che preferisci, scegli la durata e inserisci il tuo nome e cognome, matricola e argomento.'};
   var PAGEID={disp:'pageDisp',cal:'pageCal',el:'pageEl'};
   function order(){return calFirst?['cal','disp','el']:['disp','cal','el']}
   function renderTabs(){
@@ -447,7 +448,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if(!open){$('sheet').hidden=true;return}
     var vis=!$('sheet').hidden,keepN=[],keepM=[],keepT=($('tp')&&vis)?$('tp').value:'';
     for(var i=0;i<3;i++){keepN.push(($('nm'+i)&&vis)?$('nm'+i).value:(i===0?saved:''));keepM.push(($('mt'+i)&&vis)?$('mt'+i).value:(i===0?savedM:''))}
-    var OPTS=[[10,'10 minuti','(da solo)'],[20,'20 minuti','(gruppo da 2)'],[30,'30 minuti','(gruppo da 3)']];
+    var OPTS=[[10,'10 minuti','(solo)'],[20,'20 minuti','(gruppo da 2)'],[30,'30 minuti','(gruppo da 3)']];
     if(open.m+dur>TO||overlapsBlock(open.d,open.m,open.m+dur))dur=10;
     var ppl=bookings.filter(function(b){return overlap(b,open.d,open.m,open.m+STEP)});
     var asgHere=admin?assegnati.filter(function(a){return overlap(a,open.d,open.m,open.m+STEP)}):[];
@@ -576,7 +577,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     }
     var n=f.mode==='g3'?3:f.mode==='g2'?2:1;
     var h='<div class="dform"><h2 class="h2c">Disponibilità</h2>'+
-      '<div class="seg" style="grid-template-columns:1fr 1fr;margin-top:0"><button data-dm="solo" class="'+(f.mode==='solo'?'on':'')+'">Da solo</button><button data-dm="gruppo" class="'+(f.mode!=='solo'?'on':'')+'">In gruppo</button></div>';
+      '<div class="seg" style="grid-template-columns:1fr 1fr;margin-top:0"><button data-dm="solo" class="'+(f.mode==='solo'?'on':'')+'">Solo</button><button data-dm="gruppo" class="'+(f.mode!=='solo'?'on':'')+'">In gruppo</button></div>';
     if(f.mode!=='solo')h+='<div class="seg" style="grid-template-columns:1fr 1fr"><button data-dm="g2" class="'+(f.mode==='g2'?'on':'')+'">Da 2</button><button data-dm="g3" class="'+(f.mode==='g3'?'on':'')+'">Da 3</button></div>';
     for(var k=0;k<n;k++){
       h+=(n>1?'<div class="hint" style="margin-top:14px"><b>Persona '+(k+1)+'</b></div>':'')+
@@ -657,10 +658,10 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
 
   /* --- calendario prova (bozza privata) --- */
   var rhBoost=1;
-  function pRH(){return Math.round((innerWidth>=760?34:50)*rhBoost)}
+  function pRH(){return Math.round((innerWidth>=760?26:36)*rhBoost)}
   function pRange(){var a=9*60,b=13*60;prova.forEach(function(e){b=Math.max(b,e.start+e.dur)});return [a,Math.min(19*60,Math.ceil(b/60)*60)]}
   function fitGrid(){var g=$('pgrid');if(!g)return;var need=1;g.querySelectorAll('.ev').forEach(function(e){if(e.clientHeight>0)need=Math.max(need,(e.scrollHeight+2)/e.clientHeight)});
-    if(need>1.02&&rhBoost<3){rhBoost=Math.min(3,rhBoost*need);renderEl()}}
+    if(need>1.02&&rhBoost<2.2){rhBoost=Math.min(2.2,rhBoost*need);renderEl()}}
   var PRL={'1':['Proposta','mattina'],'2':['Proposta','pomeriggio'],'3':['Proposta alternata','mattina – pomeriggio'],'4':['Proposta alternata','pomeriggio – mattina']};
   function prLabel(id){var l=PRL[id];if(l&&provaAll.some(function(e){return e.pr===id&&e.imp==='set2'}))return '<b class="pt">'+esc(l[0])+'</b><i class="ps">'+esc(l[1])+'</i>';return '<b class="pt">'+esc(prName(id))+'</b>'}
   function prName(id){var e=provaAll.filter(function(q){return q.pr===id&&q.prn})[0];return e?e.prn:'Proposta '+id}
@@ -699,7 +700,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if(!prova.length)return '';
     var stud={},n=[0,0,0,0];
     prova.forEach(function(e){var p=pOf(e),ms=mems(p?p.nome:'');ms.forEach(function(m){var k=lt(m);if(!Object.keys(stud).some(function(x){return sameP(stud[x],m)}))stud[k]=m});n[Math.min(3,Math.max(1,ms.length))]++});
-    var g=[];if(n[1])g.push(n[1]+' da sol'+(n[1]===1?'o':'i'));if(n[2])g.push(n[2]+' grupp'+(n[2]===1?'o':'i')+' da 2');if(n[3])g.push(n[3]+' grupp'+(n[3]===1?'o':'i')+' da 3');
+    var g=[];if(n[1])g.push(n[1]+' sol'+(n[1]===1?'o':'i'));if(n[2])g.push(n[2]+' grupp'+(n[2]===1?'o':'i')+' da 2');if(n[3])g.push(n[3]+' grupp'+(n[3]===1?'o':'i')+' da 3');
     return '<div class="note" style="margin-top:2px">'+Object.keys(stud).length+' studenti · '+prova.length+' presentazioni ('+g.join(', ')+')</div>';
   }
   function oreLines(){
@@ -709,7 +710,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var ev=prova.filter(function(e){return e.day===d}),mat=0,pom=0;
       ev.forEach(function(e){if(e.start<13*60)mat+=e.dur;else pom+=e.dur});
       if(!ev.length)return;
-      h+='<div>'+esc(D.full.split(' ')[0]+' '+D.n)+': mattina '+(mat?hmin(mat):'—')+' · pomeriggio '+(pom?hmin(pom):'—')+' · totale '+hmin(mat+pom)+'</div>';
+      h+='<div class="od"><span>'+esc(D.full)+' · '+ev.length+' presentazioni</span><br>mattina '+(mat?hmin(mat):'—')+' · pomeriggio '+(pom?hmin(pom):'—')+' · totale '+hmin(mat+pom)+'</div>';
     });
     return '<div class="note ore">'+h+'</div>';
   }
@@ -735,7 +736,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if(pst.mode==='place'){
       var un=persone.filter(function(p){return !isPlaced(p)});
       h+='<h2>Inserisci nella proposta</h2><div class="when">'+esc(DAYS[pst.d].full)+' · dalle '+hm(pst.m)+'</div>'+
-         '<div class="seg">'+[[10,'10 minuti','(da solo)'],[20,'20 minuti','(gruppo da 2)'],[30,'30 minuti','(gruppo da 3)']].map(function(o){return '<button data-pdur="'+o[0]+'" class="'+(pst.dur===o[0]?'on':'')+'"'+(pst.m+o[0]<=TO?'':' disabled')+'>'+o[1]+'<small>'+o[2]+'</small></button>'}).join('')+'</div>';
+         '<div class="seg">'+[[10,'10 minuti','(solo)'],[20,'20 minuti','(gruppo da 2)'],[30,'30 minuti','(gruppo da 3)']].map(function(o){return '<button data-pdur="'+o[0]+'" class="'+(pst.dur===o[0]?'on':'')+'"'+(pst.m+o[0]<=TO?'':' disabled')+'>'+o[1]+'<small>'+o[2]+'</small></button>'}).join('')+'</div>';
       if(!un.length)h+='<div class="note">Tutte le persone sono già inserite nella proposta.</div>';
       un.forEach(function(p){
         var ok=prefDays(p).indexOf(pst.d)>=0&&String(p.giorni).length>0;
@@ -850,7 +851,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       $('padd').disabled=true;
       gdb('/gestione/persone','POST',rec).then(function(){giorniSel=[];['pn','pm','pa'].forEach(function(i){$(i).value=''});asig='';return loadAdmin()}).catch(function(){say('Non sono riuscito a salvare.')}).then(function(){if($('padd'))$('padd').disabled=false});
     };
-    if($('pcsv'))$('pcsv').onclick=function(){csvDownload('elenco.csv',[['#','Nome','Matricola','Argomento','Giornata','Gruppo','Altro']].concat(persone.map(function(p,i){return [i+1,p.nome,p.matricola,p.argomento,giorniTxt(p.giorni),p.tipo==='g2'?'da 2':p.tipo==='g3'?'da 3':'da solo',p.note||'']})))};
+    if($('pcsv'))$('pcsv').onclick=function(){csvDownload('elenco.csv',[['#','Nome','Matricola','Argomento','Giornata','Gruppo','Altro']].concat(persone.map(function(p,i){return [i+1,p.nome,p.matricola,p.argomento,giorniTxt(p.giorni),p.tipo==='g2'?'da 2':p.tipo==='g3'?'da 3':'solo',p.note||'']})))};
     if($('bcsv'))$('bcsv').onclick=function(){csvDownload('prenotazioni.csv',[['Giorno','Dalle','Alle','Durata (min)','Nome','Matricola','Argomento']].concat(list.map(function(p){return [DAYS[p.day].full,hm(p.start),hm(p.start+p.dur),p.dur,p.name,p.matr||'',p.topic]})))};
     if(provaOpen){
       $('pgrid').appendChild(buildGrid({rh:pRH(),small:true,pv:true,from:pRange()[0],to:pRange()[1],
