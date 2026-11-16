@@ -86,6 +86,7 @@ table.big td b{font-size:1.05rem}
 table.big td.n{font-size:.9rem}
 .tbtn{width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:12px 14px;border:1px solid var(--line);background:var(--card);border-radius:12px;cursor:pointer;font-size:.98rem;text-align:left}
 .tbtn small{color:var(--mute)}
+.prtabs{flex-wrap:wrap;margin:10px 0}.prtabs #prnew{border-style:dashed}
 .addbox{margin-top:26px;padding-top:12px;border-top:1px solid var(--line);font-size:.85rem}
 .pday{font-weight:bold;margin:16px 4px 2px;padding-bottom:4px;border-bottom:1px solid var(--line)}
 .pday small{color:var(--mute);font-weight:normal}
@@ -199,7 +200,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       return done(null);
     };
   }
-  var bookings=[],chiusure=[],sig='',persone=[],prova=[],assegnati=[],chOpen=false,chDay=0,matricole={},asig='',pst=null,provaOpen=false,open=null,dur=10,saved='',savedM='',token='',admin=false,busy=false,page='',giorniSel=[],calFirst=false,ready=false,dDone=false,dform=newForm(),dform2={nome:'',cognome:'',matricola:'',argomento:''},d2Done=false;
+  var bookings=[],chiusure=[],sig='',persone=[],prova=[],provaAll=[],curPr='1',extraPr=[],assegnati=[],chOpen=false,chDay=0,matricole={},asig='',pst=null,provaOpen=false,open=null,dur=10,saved='',savedM='',token='',admin=false,busy=false,page='',giorniSel=[],calFirst=false,ready=false,dDone=false,dform=newForm(),dform2={nome:'',cognome:'',matricola:'',argomento:''},d2Done=false;
   var auth={t:null,r:null,exp:0};
   var $=function(i){return document.getElementById(i)};
   try{saved=localStorage.getItem('nome')||'';savedM=localStorage.getItem('matr')||'';token=localStorage.getItem('tok')||'';if(!token){token='t'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('tok',token)}}catch(e){if(!token)token='t'+Math.random().toString(36).slice(2)}
@@ -289,18 +290,18 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         });
       }
       list.sort(function(a,b){return a.ts-b.ts});
-      Object.keys(pr).forEach(function(k){var x=pr[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')pv.push({id:k,pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,pub:x.pub||'',vis:!!x.vis})});
+      Object.keys(pr).forEach(function(k){var x=pr[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')pv.push({id:k,pr:String(x.pr||'1'),pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,pub:x.pub||'',vis:!!x.vis})});
       Object.keys(ag).forEach(function(k){var x=ag[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')asg.push({id:k,pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,name:x.name||'',topic:x.topic||'',matricola:x.matricola||''})});
       pv.forEach(function(e){if(e.pub&&!e.vis&&!ag[e.pub])e.pub='';if(remap[e.pid])e.pid=remap[e.pid]});
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
-      if(s!==asig){asig=s;persone=list;matricole=mm;prova=pv;assegnati=asg;if(page==='el')renderEl();render();sheet()}
+      if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
   function logout(expired){
     try{localStorage.removeItem('adm_rt')}catch(e){}
-    admin=false;auth={t:null,r:null,exp:0};persone=[];prova=[];assegnati=[];matricole={};asig='';pst=null;
+    admin=false;auth={t:null,r:null,exp:0};persone=[];prova=[];provaAll=[];assegnati=[];matricole={};asig='';pst=null;
     if(expired)setStatus('Sessione scaduta: entra di nuovo dall’Elenco.',true);
     $('pageEl').innerHTML='';showPage(order()[0]);render();sheet();
   }
@@ -497,7 +498,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         .then(function(j){
           return (a.matricola?gdb('/matricole/'+encodeURIComponent(j.name),'PUT',{matricola:a.matricola}):Promise.resolve())
             .then(function(){
-              return prova.filter(function(e){return e.pub===a.id}).reduce(function(p2,e){return p2.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name,vis:true})})},Promise.resolve());
+              return provaAll.filter(function(e){return e.pub===a.id}).reduce(function(p2,e){return p2.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name,vis:true})})},Promise.resolve());
             })
             .then(function(){return gdb('/gestione/assegnati/'+encodeURIComponent(a.id),'DELETE')})
             .then(function(){n++});
@@ -618,6 +619,8 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   var ICO_NO='<svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></svg>';
   var bookOpen=false;
   /* --- calendario prova (bozza privata) --- */
+  function setPr(){prova=provaAll.filter(function(e){return e.pr===curPr})}
+  function prList(){var o={'1':1};o[curPr]=1;provaAll.forEach(function(e){o[e.pr]=1});extraPr.forEach(function(x){o[x]=1});return Object.keys(o).sort(function(a,b){return a-b})}
   function persBy(id){return persone.filter(function(p){return p.id===id})[0]}
   function prefDays(p){var o=[];for(var i=0;i<3;i++)if(String(p.giorni).indexOf(String(i))>=0)o.push(i);return o.length?o:[0,1,2]}
   function dayEntries(d){return prova.filter(function(e){return e.day===d}).sort(function(x,y){return x.start-y.start})}
@@ -628,7 +631,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function bestDay(p,du){var ds=prefDays(p).filter(function(d){return freeSlot(d,du)>=0});if(!ds.length)return -1;ds.sort(function(a,b){return minsDay(a)-minsDay(b)});return ds[0]}
   function provaAdd(p,day,du){
     var st=freeSlot(day,du);if(st<0)return Promise.resolve(null);
-    return gdb('/gestione/prova','POST',{pid:p.id,day:day,start:st,dur:du,ts:Date.now()}).then(function(r){prova.push({id:r.name,pid:p.id,day:day,start:st,dur:du});return r.name});
+    return gdb('/gestione/prova','POST',{pr:curPr,pid:p.id,day:day,start:st,dur:du,ts:Date.now()}).then(function(r){prova.push({id:r.name,pr:curPr,pid:p.id,day:day,start:st,dur:du});return r.name});
   }
   function autoFill(){
     var todo=persone.filter(function(p){return !isPlaced(p)}),skipped=0;
@@ -638,7 +641,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function provaHtml(){
     var todo=prova.filter(function(e){return !e.pub&&persBy(e.pid)}).length;
     var h='<div class="note">Bozza privata: non compare nel calendario pubblico. Tocca un orario vuoto per inserire una persona, tocca un blocco per modificarlo.</div>'+
-      '<div class="row2"><button class="p" id="pauto">Compila</button><button class="p s" id="pclr"'+(prova.length?'':' disabled')+'>Svuota la proposta</button></div>'+
+      '<div class="tg prtabs">'+prList().map(function(x){return '<button data-pr="'+x+'" class="'+(x===curPr?'on':'')+'">Proposta '+x+'</button>'}).join('')+'<button id="prnew">+ Nuova</button></div>'+
       '<div id="pgrid"></div>';
     var un=persone.filter(function(p){return !isPlaced(p)});
     if(un.length){
@@ -647,7 +650,8 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     }
     h+='<button class="p" id="ppub"'+(todo?'':' disabled')+'>Carica nel calendario normale'+(todo?' ('+todo+')':'')+'</button>'+
        '<div class="hint">Nel calendario normale compaiono in azzurro e le vede solo chi ha la password: gli altri non le vedono. Le persone già caricate hanno il blocco più chiaro con la spunta e non si caricano due volte.</div>';
-    if(prova.length)h+='<button class="lnk" id="provacsv">Scarica proposta di calendario (CSV)</button>';
+    if(prova.length)h+='<button class="lnk" id="provacsv">Scarica la proposta '+curPr+' (CSV)</button>';
+    if(prList().length>1)h+='<button class="lnk" id="prdel">Elimina la proposta '+curPr+'</button>';
     return h;
   }
   /* finestra per inserire / modificare nella prova */
@@ -679,7 +683,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var p=persBy(b.getAttribute('data-pput'));
       if(pst.m+pst.dur>TO){say('Non c’è posto: si supererebbero le 19:00.');return}
       b.disabled=true;
-      gdb('/gestione/prova','POST',{pid:p.id,day:pst.d,start:pst.m,dur:pst.dur,ts:Date.now()}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a inserire.');b.disabled=false});
+      gdb('/gestione/prova','POST',{pr:curPr,pid:p.id,day:pst.d,start:pst.m,dur:pst.dur,ts:Date.now()}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a inserire.');b.disabled=false});
     }});
     var keepT=function(){var t=$('eo')?$('eo').value:'';var m=t.match(/^(\d{1,2})[:.](\d{2})$/);if(m)pst.start=(+m[1])*60+(+m[2])};
     $('ppanel').querySelectorAll('[data-eday]').forEach(function(b){b.onclick=function(){keepT();pst.day=+b.getAttribute('data-eday');psheet()}});
@@ -690,7 +694,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var st=(+m[1])*60+(+m[2]);
       if(st<FROM||st+pst.dur>TO){say('L’orario deve stare tra le 9:00 e le 19:00.');return}
       var e=prova.filter(function(x){return x.id===pst.id})[0];
-      gdb('/gestione/prova/'+encodeURIComponent(pst.id),'PUT',{pid:e.pid,day:pst.day,start:st,dur:pst.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a salvare.')});
+      gdb('/gestione/prova/'+encodeURIComponent(pst.id),'PUT',{pr:e.pr,pid:e.pid,day:pst.day,start:st,dur:pst.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a salvare.')});
     };
     if($('edel'))$('edel').onclick=function(){gdb('/gestione/prova/'+encodeURIComponent(pst.id),'DELETE').then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a rimuovere.')})};
   }
@@ -706,7 +710,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     todo.reduce(function(pr,e){return pr.then(function(){
       var p=persBy(e.pid);
       return gdb('/gestione/assegnati','POST',{pid:e.pid,day:e.day,start:e.start,dur:e.dur,name:p.nome,topic:p.argomento||'',matricola:p.matricola||'',ts:Date.now()+n})
-        .then(function(j){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name})})
+        .then(function(j){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name})})
         .then(function(){n++});
     })},Promise.resolve()).then(function(){say('Caricate '+n+' persone nel calendario normale, visibili solo con la password.')},function(){say('Caricate '+n+' persone, poi si è interrotto. Controlla il calendario prima di riprovare.')})
       .then(function(){busy=false;asig='';return loadAdmin()});
@@ -728,7 +732,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       });
       if(list.length)h+='<button class="lnk" id="bcsv">Scarica prenotazioni (CSV)</button>';
     }
-    h+='<button class="tbtn" id="ptog" aria-expanded="'+provaOpen+'"><span>'+ICO_CAL+'Proposta di calendario <small>('+prova.length+')</small></span><span>'+(provaOpen?'▴':'▾')+'</span></button>';
+    h+='<button class="tbtn" id="ptog" aria-expanded="'+provaOpen+'"><span>'+ICO_CAL+'Proposta di calendario <small>('+prList().length+(prList().length===1?' proposta':' proposte')+')</small></span><span>'+(provaOpen?'▴':'▾')+'</span></button>';
     if(provaOpen)h+=provaHtml();
     var nm='';
     if(!persone.length)nm+='<div class="msg">Nessuno in elenco.</div>';
@@ -762,7 +766,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var id=b.getAttribute('data-pdel');
       ask('Rimuovere questa persona dall’elenco?','Rimuovi').then(function(ok){
         if(!ok)return;
-        var mine=prova.filter(function(e){return e.pid===id});
+        var mine=provaAll.filter(function(e){return e.pid===id});
         mine.reduce(function(pr,e){return pr.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'DELETE')})},Promise.resolve())
           .then(function(){var pp=persBy(id);if(pp&&pp.src==='disp'){return (pp.all||[id]).reduce(function(pr,x){return pr.then(function(){return gdb('/disponibilita/'+encodeURIComponent(x),'DELETE')})},Promise.resolve())}return gdb('/gestione/persone/'+encodeURIComponent(id),'DELETE')}).then(function(){asig='';return loadAdmin()}).catch(function(){say('Non sono riuscito a rimuovere.')});
       });
@@ -780,11 +784,14 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=persBy(e.pid);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?' · '+esc(p.argomento):'')}})},
         cell:function(d,m){pst={mode:'place',d:d,m:m,dur:10};if(m+10>TO)return;psheet()},
         evclick:function(x){var e=prova.filter(function(q){return q.id===x.id})[0];if(!e)return;pst={mode:'edit',id:e.id,day:e.day,start:e.start,dur:e.dur};psheet()}}));
-      $('pauto').onclick=function(){$('pauto').disabled=true;$('pauto').textContent='Inserisco…';autoFill().catch(function(){say('Non sono riuscito a completare l’inserimento.');asig='';loadAdmin()})};
-      $('pclr').onclick=function(){
-        if(!prova.length)return;
-        ask('Svuotare tutta la proposta?','Svuota').then(function(ok){if(!ok)return;
-        prova.reduce(function(pr,e){return pr.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'DELETE')})},Promise.resolve()).then(function(){asig='';return loadAdmin()}).catch(function(){say('Non sono riuscito a svuotare.')});
+      a.querySelectorAll('[data-pr]').forEach(function(b){b.onclick=function(){curPr=b.getAttribute('data-pr');setPr();renderEl()}});
+      $('prnew').onclick=function(){var l=prList(),n=String(Math.max.apply(null,l.map(Number))+1);extraPr.push(n);curPr=n;setPr();renderEl()};
+      if($('prdel'))$('prdel').onclick=function(){
+        ask('Eliminare la proposta '+curPr+'? Le persone già caricate nel calendario normale restano lì.','Elimina').then(function(ok){if(!ok)return;
+        var gone=curPr;
+        prova.reduce(function(pr,e){return pr.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'DELETE')})},Promise.resolve())
+          .then(function(){extraPr=extraPr.filter(function(x){return x!==gone});provaAll=provaAll.filter(function(e){return e.pr!==gone});curPr=prList().filter(function(x){return x!==gone})[0]||'1';setPr();asig='';return loadAdmin()})
+          .then(function(){renderEl()}).catch(function(){say('Non sono riuscito a eliminare.')});
         });
       };
       $('ppub').onclick=publishProva;
@@ -793,7 +800,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         if(d<0){say('Non c’è posto nelle giornate di questa persona.');return}
         provaAdd(p,d,du).then(function(id){var e=prova.filter(function(q){return q.id===id})[0];pst={mode:'edit',id:id,day:e.day,start:e.start,dur:e.dur};asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a inserire.')});
       }});
-      if($('provacsv'))$('provacsv').onclick=function(){csvDownload('proposta-di-calendario.csv',[['Giorno','Dalle','Alle','Nome','Matricola','Argomento']].concat(prova.slice().sort(function(x,y){return x.day*10000+x.start-(y.day*10000+y.start)}).map(function(e){var p=persBy(e.pid)||{};return [DAYS[e.day].full,hm(e.start),hm(e.start+e.dur),p.nome||'',p.matricola||'',p.argomento||'']})))};
+      if($('provacsv'))$('provacsv').onclick=function(){csvDownload('proposta-'+curPr+'.csv',[['Giorno','Dalle','Alle','Nome','Matricola','Argomento']].concat(prova.slice().sort(function(x,y){return x.day*10000+x.start-(y.day*10000+y.start)}).map(function(e){var p=persBy(e.pid)||{};return [DAYS[e.day].full,hm(e.start),hm(e.start+e.dur),p.nome||'',p.matricola||'',p.argomento||'']})))};
     }
   }
 
