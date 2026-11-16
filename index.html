@@ -103,8 +103,14 @@ table.big td.n{font-size:.9rem}
 .cal.small .axis span{font-size:.6rem}
 .cal.small .ev{font-size:.6rem;padding:0 3px;border-radius:4px}
 .ev.pv{pointer-events:auto;cursor:pointer}
-.cal.pvg .ev{font-size:.74rem;line-height:1.25;padding:3px 5px}
+.cal.pvg .ev{font-size:.8rem;line-height:1.22;padding:4px 6px;font-family:Georgia,"Times New Roman",serif}
 .cal.pvg .ev.one{white-space:normal}
+.cal.pvg .ev b{display:block;text-transform:uppercase;font-weight:bold;letter-spacing:.02em;font-size:.74rem}
+.cal.pvg .ev .tm{display:block;margin-top:3px;font-style:normal;font-size:.76rem;line-height:1.2;color:var(--ink)}
+.cal.pvg .head .n{font-size:1.3rem}.cal.pvg .head .w,.cal.pvg .head .m{font-size:.72rem}
+.cal.pvg .axis span{font-size:.72rem}
+#pgrid{width:100vw;margin-left:calc(50% - 50vw);padding:0 6px;box-sizing:border-box}
+@media(min-width:760px){.cal.pvg .ev{font-size:.95rem;padding:6px 9px}.cal.pvg .ev b{font-size:.9rem}.cal.pvg .ev .tm{font-size:.95rem}#pgrid{padding:0 20px}}
 .cal.pvg .axis span{font-size:.68rem}
 .ev i{font-style:italic}
 #ppanel .info{display:grid;gap:14px;margin:14px 2px 6px;font-size:1.02rem}
@@ -833,8 +839,8 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if($('pcsv'))$('pcsv').onclick=function(){csvDownload('elenco.csv',[['#','Nome','Matricola','Argomento','Giornata','Gruppo','Altro']].concat(persone.map(function(p,i){return [i+1,p.nome,p.matricola,p.argomento,giorniTxt(p.giorni),p.tipo==='g2'?'da 2':p.tipo==='g3'?'da 3':'da solo',p.note||'']})))};
     if($('bcsv'))$('bcsv').onclick=function(){csvDownload('prenotazioni.csv',[['Giorno','Dalle','Alle','Durata (min)','Nome','Matricola','Argomento']].concat(list.map(function(p){return [DAYS[p.day].full,hm(p.start),hm(p.start+p.dur),p.dur,p.name,p.matr||'',p.topic]})))};
     if(provaOpen){
-      $('pgrid').appendChild(buildGrid({rh:30,small:true,pv:true,to:15*60,
-        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?'<br><i>'+esc(p.argomento)+'</i>':'')}})},
+      $('pgrid').appendChild(buildGrid({rh:innerWidth>=760?34:50,small:true,pv:true,to:15*60,
+        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?'<span class="tm">'+esc(p.argomento)+'</span>':'')}})},
         cell:function(d,m){pst={mode:'place',d:d,m:m,dur:10};if(m+10>TO)return;psheet()},
         evclick:function(x){var e=prova.filter(function(q){return q.id===x.id})[0];if(!e)return;pst={mode:'edit',id:e.id,day:e.day,start:e.start,dur:e.dur};psheet()}}));
       a.querySelectorAll('[data-pr]').forEach(function(b){b.onclick=function(){curPr=b.getAttribute('data-pr');setPr();renderEl()}});
