@@ -290,12 +290,13 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         });
       }
       list.sort(function(a,b){return a.ts-b.ts});
-      Object.keys(pr).forEach(function(k){var x=pr[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')pv.push({id:k,pr:String(x.pr||'1'),pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,pub:x.pub||'',vis:!!x.vis})});
+      Object.keys(pr).forEach(function(k){var x=pr[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')pv.push({id:k,pr:String(x.pr||'1'),nm:x.nm||'',imp:x.imp||'',pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,pub:x.pub||'',vis:!!x.vis})});
       Object.keys(ag).forEach(function(k){var x=ag[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')asg.push({id:k,pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,name:x.name||'',topic:x.topic||'',matricola:x.matricola||''})});
       pv.forEach(function(e){if(e.pub&&!e.vis&&!ag[e.pub])e.pub='';if(remap[e.pid])e.pid=remap[e.pid]});
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
+      importDef();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -498,7 +499,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         .then(function(j){
           return (a.matricola?gdb('/matricole/'+encodeURIComponent(j.name),'PUT',{matricola:a.matricola}):Promise.resolve())
             .then(function(){
-              return provaAll.filter(function(e){return e.pub===a.id}).reduce(function(p2,e){return p2.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name,vis:true})})},Promise.resolve());
+              return provaAll.filter(function(e){return e.pub===a.id}).reduce(function(p2,e){return p2.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name,vis:true})})},Promise.resolve());
             })
             .then(function(){return gdb('/gestione/assegnati/'+encodeURIComponent(a.id),'DELETE')})
             .then(function(){n++});
@@ -618,9 +619,29 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   var ICO_LIST='<svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="17.5" r="1"/></svg>';
   var ICO_NO='<svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></svg>';
   var bookOpen=false;
+  /* --- proposta definitiva (dalla chat): inserita una volta come Proposta 1 --- */
+  var DEF1=[[0,540,18,'Aurora Tratzi'],[0,558,18,'Francesca Romana Lucarelli'],[0,576,18,'Alice Morelli'],[0,594,18,'Emanuela Clemente'],[0,612,18,'Gemma Ceccacci'],[0,630,18,'Alexia-Bianca Repezis'],[0,648,18,'Antonio Garritano'],[0,666,28,'Maia Bolis, Claudia Canta'],[0,840,28,'Sofia Verrengia, Sofia Pierosara'],[0,868,18,'Exauce Kisolokele'],[1,540,18,'Lavinia Cleman'],[1,558,28,'Elisa Caldararo, Simone Leo'],[1,586,38,'Diego Corridori, Edoardo Musti, Edoardo Liso'],[1,624,18,'Simone Cardillo'],[1,642,28,'Michele Grazioso, Simone Cardillo'],[1,670,18,'Marta Georgescu'],[1,688,18,'Beatrice Bindi'],[1,706,18,'Carola Fabrizi'],[1,840,18,'Denisa Ivanus'],[2,540,38,'Attilio Perna, Francesco Kakpo, Stefano Monti'],[2,578,18,'Martina Benevento'],[2,596,18,'Arianna Mencancini'],[2,614,18,'Angela Di Cesare'],[2,632,18,'Antonio Agostino'],[2,650,38,'Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni'],[2,688,18,'Sara Fasciano'],[2,706,18,'Denise Andracchio'],[2,724,18,'Alice Gianni'],[2,840,18,'Sara Santoro']],importing=false;
+  function memSet(x){return String(x||'').split(/\s*(?:,|\be\b|&)\s*/).map(nk).filter(Boolean).sort().join('|')}
+  function importDef(){
+    if(importing||!admin||!persone.length)return;
+    if(provaAll.some(function(e){return e.imp==='def1'}))return;
+    importing=true;
+    var old=provaAll.filter(function(e){return e.pr==='1'}),nx=String(Math.max.apply(null,[1].concat(provaAll.map(function(e){return +e.pr||1})))+1);
+    var byKey={};persone.forEach(function(r){var k=memSet(r.nome);if(!byKey[k])byKey[k]=r});
+    var miss=0;
+    old.reduce(function(pr,e){return pr.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:nx,nm:e.nm||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined})})},Promise.resolve())
+    .then(function(){return DEF1.reduce(function(pr,x,i){return pr.then(function(){
+      var r=byKey[memSet(x[3])];if(!r)miss++;
+      return gdb('/gestione/prova','POST',{pr:'1',imp:'def1',pid:r?r.id:'',nm:x[3],day:x[0],start:x[1],dur:x[2],ts:Date.now()+i});
+    })},Promise.resolve())})
+    .then(function(){curPr='1';provaOpen=true;asig='';return loadAdmin()})
+    .then(function(){say('Ho inserito la proposta definitiva come Proposta 1'+(old.length?' e spostato quella di prima nella Proposta '+nx:'')+'.')},function(){say('Non sono riuscito a inserire tutta la proposta definitiva. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
   /* --- calendario prova (bozza privata) --- */
   function setPr(){prova=provaAll.filter(function(e){return e.pr===curPr})}
   function prList(){var o={'1':1};o[curPr]=1;provaAll.forEach(function(e){o[e.pr]=1});extraPr.forEach(function(x){o[x]=1});return Object.keys(o).sort(function(a,b){return a-b})}
+  function pOf(e){return persBy(e.pid)||(e.nm?{id:'',nome:e.nm,argomento:'',matricola:''}:null)}
   function persBy(id){return persone.filter(function(p){return p.id===id})[0]}
   function prefDays(p){var o=[];for(var i=0;i<3;i++)if(String(p.giorni).indexOf(String(i))>=0)o.push(i);return o.length?o:[0,1,2]}
   function dayEntries(d){return prova.filter(function(e){return e.day===d}).sort(function(x,y){return x.start-y.start})}
@@ -639,7 +660,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       .then(function(){asig='';return loadAdmin()}).then(function(){if(skipped)say(skipped+' persone non sono state inserite: non c’è posto nelle loro giornate.')});
   }
   function provaHtml(){
-    var todo=prova.filter(function(e){return !e.pub&&persBy(e.pid)}).length;
+    var todo=prova.filter(function(e){return !e.pub&&pOf(e)}).length;
     var h='<div class="note">Bozza privata: non compare nel calendario pubblico. Tocca un orario vuoto per inserire una persona, tocca un blocco per modificarlo.</div>'+
       '<div class="tg prtabs">'+prList().map(function(x){return '<button data-pr="'+x+'" class="'+(x===curPr?'on':'')+'">Proposta '+x+'</button>'}).join('')+'<button id="prnew">+ Nuova</button></div>'+
       '<div id="pgrid"></div>';
@@ -668,12 +689,12 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         h+='<div class="who"><div><b>'+esc(p.nome)+'</b>'+(ok?' <small class="ok">✓ disponibile</small>':'')+'<br><small>'+esc(p.argomento||'—')+' · '+esc(giorniTxt(p.giorni))+'</small></div><button class="g" data-pput="'+esc(p.id)+'">Inserisci</button></div>';
       });
     }else{
-      var e=prova.filter(function(x){return x.id===pst.id})[0],pp=e?persBy(e.pid):null;
+      var e=prova.filter(function(x){return x.id===pst.id})[0],pp=e?pOf(e):null;
       if(!e){pst=null;$('psheet').hidden=true;return}
       h+='<h2>'+esc(pp?pp.nome:'(rimosso)')+'</h2><div class="when">'+esc(pp?(pp.argomento||'—')+(pp.matricola?' · matr. '+pp.matricola:''):'')+'</div>';
       if(e.pub)h+='<div class="note">Già caricata nel calendario normale: cambiare qui non modifica quella prenotazione.</div>';
       h+='<div class="tg">'+DAYS.map(function(D2,i){return '<button data-eday="'+i+'" class="'+(pst.day===i?'on':'')+'">'+D2.w+' '+D2.n+'</button>'}).join('')+'</div>'+
-         '<div class="row2"><input type="text" id="eo" placeholder="Ora (es. 10.30)" value="'+hm(pst.start)+'"><div class="tg" style="margin-top:8px">'+[10,20,30].map(function(x){return '<button data-edur="'+x+'" class="'+(pst.dur===x?'on':'')+'">'+x+'′</button>'}).join('')+'</div></div>'+
+         '<div class="row2"><input type="text" id="eo" placeholder="Ora (es. 10.30)" value="'+hm(pst.start)+'"><div class="tg" style="margin-top:8px">'+[10,18,20,28,30,38].map(function(x){return '<button data-edur="'+x+'" class="'+(pst.dur===x?'on':'')+'">'+x+'′</button>'}).join('')+'</div></div>'+
          '<div class="row2"><button class="p" id="esave">Salva</button><button class="p s" id="edel">Togli dalla proposta</button></div>';
     }
     $('ppanel').innerHTML=h;$('psheet').hidden=false;
@@ -694,7 +715,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var st=(+m[1])*60+(+m[2]);
       if(st<FROM||st+pst.dur>TO){say('L’orario deve stare tra le 9:00 e le 19:00.');return}
       var e=prova.filter(function(x){return x.id===pst.id})[0];
-      gdb('/gestione/prova/'+encodeURIComponent(pst.id),'PUT',{pr:e.pr,pid:e.pid,day:pst.day,start:st,dur:pst.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a salvare.')});
+      gdb('/gestione/prova/'+encodeURIComponent(pst.id),'PUT',{pr:e.pr,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:pst.day,start:st,dur:pst.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a salvare.')});
     };
     if($('edel'))$('edel').onclick=function(){gdb('/gestione/prova/'+encodeURIComponent(pst.id),'DELETE').then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a rimuovere.')})};
   }
@@ -702,15 +723,15 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
 
   /* carica la bozza nel calendario normale */
   function publishProva(){
-    var todo=prova.filter(function(e){return !e.pub&&persBy(e.pid)});
+    var todo=prova.filter(function(e){return !e.pub&&pOf(e)});
     if(!todo.length||busy)return;
     return ask('Caricare '+todo.length+' persone nel calendario normale? Saranno in azzurro e le vedrà solo chi ha la password.','Carica').then(function(ok){
     if(!ok)return;
     busy=true;var n=0;$('ppub').disabled=true;$('ppub').textContent='Carico…';
     todo.reduce(function(pr,e){return pr.then(function(){
-      var p=persBy(e.pid);
+      var p=pOf(e);
       return gdb('/gestione/assegnati','POST',{pid:e.pid,day:e.day,start:e.start,dur:e.dur,name:p.nome,topic:p.argomento||'',matricola:p.matricola||'',ts:Date.now()+n})
-        .then(function(j){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name})})
+        .then(function(j){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name})})
         .then(function(){n++});
     })},Promise.resolve()).then(function(){say('Caricate '+n+' persone nel calendario normale, visibili solo con la password.')},function(){say('Caricate '+n+' persone, poi si è interrotto. Controlla il calendario prima di riprovare.')})
       .then(function(){busy=false;asig='';return loadAdmin()});
@@ -781,7 +802,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if($('bcsv'))$('bcsv').onclick=function(){csvDownload('prenotazioni.csv',[['Giorno','Dalle','Alle','Durata (min)','Nome','Matricola','Argomento']].concat(list.map(function(p){return [DAYS[p.day].full,hm(p.start),hm(p.start+p.dur),p.dur,p.name,p.matr||'',p.topic]})))};
     if(provaOpen){
       $('pgrid').appendChild(buildGrid({rh:18,small:true,
-        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=persBy(e.pid);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?' · '+esc(p.argomento):'')}})},
+        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?' · '+esc(p.argomento):'')}})},
         cell:function(d,m){pst={mode:'place',d:d,m:m,dur:10};if(m+10>TO)return;psheet()},
         evclick:function(x){var e=prova.filter(function(q){return q.id===x.id})[0];if(!e)return;pst={mode:'edit',id:e.id,day:e.day,start:e.start,dur:e.dur};psheet()}}));
       a.querySelectorAll('[data-pr]').forEach(function(b){b.onclick=function(){curPr=b.getAttribute('data-pr');setPr();renderEl()}});
@@ -800,7 +821,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         if(d<0){say('Non c’è posto nelle giornate di questa persona.');return}
         provaAdd(p,d,du).then(function(id){var e=prova.filter(function(q){return q.id===id})[0];pst={mode:'edit',id:id,day:e.day,start:e.start,dur:e.dur};asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a inserire.')});
       }});
-      if($('provacsv'))$('provacsv').onclick=function(){csvDownload('proposta-'+curPr+'.csv',[['Giorno','Dalle','Alle','Nome','Matricola','Argomento']].concat(prova.slice().sort(function(x,y){return x.day*10000+x.start-(y.day*10000+y.start)}).map(function(e){var p=persBy(e.pid)||{};return [DAYS[e.day].full,hm(e.start),hm(e.start+e.dur),p.nome||'',p.matricola||'',p.argomento||'']})))};
+      if($('provacsv'))$('provacsv').onclick=function(){csvDownload('proposta-'+curPr+'.csv',[['Giorno','Dalle','Alle','Nome','Matricola','Argomento']].concat(prova.slice().sort(function(x,y){return x.day*10000+x.start-(y.day*10000+y.start)}).map(function(e){var p=pOf(e)||{};return [DAYS[e.day].full,hm(e.start),hm(e.start+e.dur),p.nome||'',p.matricola||'',p.argomento||'']})))};
     }
   }
 
