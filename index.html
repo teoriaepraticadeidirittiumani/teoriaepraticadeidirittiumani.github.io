@@ -719,19 +719,6 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     var keep={};['pn','pm','pa'].forEach(function(i){var e=$(i);if(e)keep[i]=e.value});
     var h='<div class="top"><h1>Elenco</h1><button class="g" id="exit">Esci</button></div>'+
       '<div class="note" style="margin-top:0">Riservato al coordinamento organizzativo. Non compare nel calendario.</div>';
-    if(!persone.length)h+='<div class="msg">Nessuno in elenco.</div>';
-    else{
-      h+='<table class="big"><tr><th></th><th>Nome</th><th>Matricola</th><th>Argomento</th><th>Giornata</th><th></th></tr>';
-      persone.forEach(function(p,i){
-        h+='<tr><td class="n">'+(i+1)+'</td><td><b>'+esc(p.nome)+'</b>'+(p.tipo==='g2'?'<br><small class="gm">gruppo da 2</small>':p.tipo==='g3'?'<br><small class="gm">gruppo da 3</small>':'')+(!p.orph&&p.all&&p.all.length>1?'<br><small class="gm">registrazione aggiornata</small>':'')+'</td><td>'+esc(p.matricola||'—')+'</td><td>'+esc(p.argomento||'—')+(p.note?'<br><small class="gm">'+esc(p.note)+'</small>':'')+'</td><td>'+esc(giorniTxt(p.giorni))+'</td><td><button class="g" data-pdel="'+esc(p.id)+'" aria-label="Rimuovi">×</button></td></tr>';
-      });
-      h+='</table><button class="lnk" id="pcsv">Scarica elenco (CSV)</button>';
-    }
-    h+='<div class="addbox"><div class="addh">'+ICO_PEN+'Aggiungi all’elenco</div>'+
-       '<input type="text" id="pn" placeholder="Nome e cognome" maxlength="60" value="'+esc(keep.pn||'')+'">'+
-       '<div class="row2"><input type="text" id="pm" placeholder="Matricola" maxlength="20" inputmode="numeric" value="'+esc(keep.pm||'')+'"><input type="text" id="pa" placeholder="Argomento" maxlength="80" value="'+esc(keep.pa||'')+'"></div>'+
-       '<div class="tg">'+DAYS.map(function(D,i){return '<button data-g="'+i+'" class="'+(giorniSel.indexOf(i)>=0?'on':'')+'">'+D.w+' '+D.n+'</button>'}).join('')+'</div>'+
-       '<button class="p" id="padd">Aggiungi</button></div>';
     var list=bookings.map(function(b){return {id:b.id,day:b.day,start:b.start,dur:b.dur,name:b.name,topic:b.topic,matr:matricole[b.id]||'',asg:false}}).concat(assegnati.map(function(a){return {id:a.id,day:a.day,start:a.start,dur:a.dur,name:a.name,topic:a.topic,matr:a.matricola,asg:true}})).sort(function(x,y){return x.day*10000+x.start-(y.day*10000+y.start)});
     h+='<button class="tbtn" id="btog" aria-expanded="'+bookOpen+'"><span>'+ICO_LIST+'Prenotazioni del calendario <small>('+list.length+')</small></span><span>'+(bookOpen?'▴':'▾')+'</span></button>';
     if(bookOpen){
@@ -743,6 +730,21 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     }
     h+='<button class="tbtn" id="ptog" aria-expanded="'+provaOpen+'"><span>'+ICO_CAL+'Calendario prova <small>('+prova.length+')</small></span><span>'+(provaOpen?'▴':'▾')+'</span></button>';
     if(provaOpen)h+=provaHtml();
+    var nm='';
+    if(!persone.length)nm+='<div class="msg">Nessuno in elenco.</div>';
+    else{
+      nm+='<table class="big"><tr><th></th><th>Nome</th><th>Matricola</th><th>Argomento</th><th>Giornata</th><th></th></tr>';
+      persone.forEach(function(p,i){
+        nm+='<tr><td class="n">'+(i+1)+'</td><td><b>'+esc(p.nome)+'</b>'+(p.tipo==='g2'?'<br><small class="gm">gruppo da 2</small>':p.tipo==='g3'?'<br><small class="gm">gruppo da 3</small>':'')+(!p.orph&&p.all&&p.all.length>1?'<br><small class="gm">registrazione aggiornata</small>':'')+'</td><td>'+esc(p.matricola||'—')+'</td><td>'+esc(p.argomento||'—')+(p.note?'<br><small class="gm">'+esc(p.note)+'</small>':'')+'</td><td>'+esc(giorniTxt(p.giorni))+'</td><td><button class="g" data-pdel="'+esc(p.id)+'" aria-label="Rimuovi">×</button></td></tr>';
+      });
+      nm+='</table><button class="lnk" id="pcsv">Scarica elenco (CSV)</button>';
+    }
+    nm+='<div class="addbox"><div class="addh">'+ICO_PEN+'Aggiungi all’elenco</div>'+
+       '<input type="text" id="pn" placeholder="Nome e cognome" maxlength="60" value="'+esc(keep.pn||'')+'">'+
+       '<div class="row2"><input type="text" id="pm" placeholder="Matricola" maxlength="20" inputmode="numeric" value="'+esc(keep.pm||'')+'"><input type="text" id="pa" placeholder="Argomento" maxlength="80" value="'+esc(keep.pa||'')+'"></div>'+
+       '<div class="tg">'+DAYS.map(function(D,i){return '<button data-g="'+i+'" class="'+(giorniSel.indexOf(i)>=0?'on':'')+'">'+D.w+' '+D.n+'</button>'}).join('')+'</div>'+
+       '<button class="p" id="padd">Aggiungi</button></div>';
+    h+='<div style="margin-top:22px">'+nm+'</div>';
     h+='<div class="addbox"><div class="addh">Ordine delle schede</div><div class="note">Scegli quale scheda vedono per prima le persone che aprono il sito. Quando non ti serve più raccogliere le disponibilità, metti il calendario per primo: la scheda Disponibilità resta come seconda.</div>'+
        '<div class="seg" style="grid-template-columns:1fr 1fr"><button data-ord="disp" class="'+(!calFirst?'on':'')+'">Disponibilità per prima</button><button data-ord="cal" class="'+(calFirst?'on':'')+'">Calendario per primo</button></div></div>';
     a.innerHTML=h;
