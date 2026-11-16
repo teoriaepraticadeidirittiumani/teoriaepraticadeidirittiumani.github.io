@@ -670,11 +670,27 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     return todo.reduce(function(pr,p){return pr.then(function(){var du=defDur(p),d=bestDay(p,du);if(d<0){skipped++;return}return provaAdd(p,d,du)})},Promise.resolve())
       .then(function(){asig='';return loadAdmin()}).then(function(){if(skipped)say(skipped+' persone non sono state inserite: non c’è posto nelle loro giornate.')});
   }
+  function hmin(m){var h=Math.floor(m/60),r=m%60;return h?(h+'h'+(r<10?'0':'')+r):(r+' min')}
+  function riepilogo(){
+    if(!prova.length)return '';
+    var stud={},n=[0,0,0,0],tot=0,rows='';
+    prova.forEach(function(e){var p=pOf(e),ms=mems(p?p.nome:'');ms.forEach(function(m){var k=lt(m);if(!Object.keys(stud).some(function(x){return sameP(stud[x],m)}))stud[k]=m});n[Math.min(3,Math.max(1,ms.length))]++});
+    DAYS.forEach(function(D,d){
+      var ev=prova.filter(function(e){return e.day===d}),mat=0,pom=0;
+      ev.forEach(function(e){if(e.start<13*60)mat+=e.dur;else pom+=e.dur});
+      if(!ev.length)return;tot+=mat+pom;
+      rows+='<tr><td><b>'+esc(D.full)+'</b><br><small class="gm">'+ev.length+' presentazioni</small></td><td>'+(mat?hmin(mat):'—')+'</td><td>'+(pom?hmin(pom):'—')+'</td><td><b>'+hmin(mat+pom)+'</b></td></tr>';
+    });
+    var g=[];if(n[1])g.push(n[1]+' da sol'+(n[1]===1?'o':'i'));if(n[2])g.push(n[2]+' grupp'+(n[2]===1?'o':'i')+' da 2');if(n[3])g.push(n[3]+' grupp'+(n[3]===1?'o':'i')+' da 3');
+    return '<div class="pday">Riepilogo della proposta '+esc(curPr)+'</div>'+
+      '<div class="note" style="margin-top:6px"><b>'+Object.keys(stud).length+' studenti</b> · '+prova.length+' presentazioni ('+g.join(', ')+')</div>'+
+      '<table class="big"><tr><th>Giornata</th><th>Mattina</th><th>Pomeriggio</th><th>Totale</th></tr>'+rows+
+      '<tr><td><b>In tutto</b></td><td></td><td></td><td><b>'+hmin(tot)+'</b></td></tr></table>';
+  }
   function provaHtml(){
     var todo=prova.filter(function(e){return !e.pub&&pOf(e)}).length;
-    var h='<div class="note">Bozza privata: non compare nel calendario pubblico. Tocca un orario vuoto per inserire una persona, tocca un blocco per modificarlo.</div>'+
-      '<div class="tg prtabs">'+prList().map(function(x){return '<button data-pr="'+x+'" class="'+(x===curPr?'on':'')+'">Proposta '+x+'</button>'}).join('')+'<button id="prnew">+ Nuova</button></div>'+
-      '<div id="pgrid"></div>';
+    var h='<div class="tg prtabs">'+prList().map(function(x){return '<button data-pr="'+x+'" class="'+(x===curPr?'on':'')+'">Proposta '+x+'</button>'}).join('')+'<button id="prnew">+ Nuova</button></div>'+
+      '<div id="pgrid"></div>'+riepilogo();
     var un=persone.filter(function(p){return !isPlaced(p)});
     if(un.length){
       h+='<div class="pday">Non ancora inseriti <small>('+un.length+')</small></div>';
