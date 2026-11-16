@@ -638,7 +638,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function provaHtml(){
     var todo=prova.filter(function(e){return !e.pub&&persBy(e.pid)}).length;
     var h='<div class="note">Bozza privata: non compare nel calendario pubblico. Tocca un orario vuoto per inserire una persona, tocca un blocco per modificarlo.</div>'+
-      '<div class="row2"><button class="p" id="pauto">Compila</button><button class="p s" id="pclr"'+(prova.length?'':' disabled')+'>Svuota la prova</button></div>'+
+      '<div class="row2"><button class="p" id="pauto">Compila</button><button class="p s" id="pclr"'+(prova.length?'':' disabled')+'>Svuota la proposta</button></div>'+
       '<div id="pgrid"></div>';
     var un=persone.filter(function(p){return !isPlaced(p)});
     if(un.length){
@@ -647,7 +647,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     }
     h+='<button class="p" id="ppub"'+(todo?'':' disabled')+'>Carica nel calendario normale'+(todo?' ('+todo+')':'')+'</button>'+
        '<div class="hint">Nel calendario normale compaiono in azzurro e le vede solo chi ha la password: gli altri non le vedono. Le persone già caricate hanno il blocco più chiaro con la spunta e non si caricano due volte.</div>';
-    if(prova.length)h+='<button class="lnk" id="provacsv">Scarica calendario prova (CSV)</button>';
+    if(prova.length)h+='<button class="lnk" id="provacsv">Scarica proposta di calendario (CSV)</button>';
     return h;
   }
   /* finestra per inserire / modificare nella prova */
@@ -656,9 +656,9 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     var h='<button class="x" id="pcl" aria-label="Chiudi">×</button>';
     if(pst.mode==='place'){
       var un=persone.filter(function(p){return !isPlaced(p)});
-      h+='<h2>Inserisci nella prova</h2><div class="when">'+esc(DAYS[pst.d].full)+' · dalle '+hm(pst.m)+'</div>'+
+      h+='<h2>Inserisci nella proposta</h2><div class="when">'+esc(DAYS[pst.d].full)+' · dalle '+hm(pst.m)+'</div>'+
          '<div class="seg">'+[[10,'10 minuti','(da solo)'],[20,'20 minuti','(gruppo da 2)'],[30,'30 minuti','(gruppo da 3)']].map(function(o){return '<button data-pdur="'+o[0]+'" class="'+(pst.dur===o[0]?'on':'')+'"'+(pst.m+o[0]<=TO?'':' disabled')+'>'+o[1]+'<small>'+o[2]+'</small></button>'}).join('')+'</div>';
-      if(!un.length)h+='<div class="note">Tutte le persone sono già inserite nella prova.</div>';
+      if(!un.length)h+='<div class="note">Tutte le persone sono già inserite nella proposta.</div>';
       un.forEach(function(p){
         var ok=prefDays(p).indexOf(pst.d)>=0&&String(p.giorni).length>0;
         h+='<div class="who"><div><b>'+esc(p.nome)+'</b>'+(ok?' <small class="ok">✓ disponibile</small>':'')+'<br><small>'+esc(p.argomento||'—')+' · '+esc(giorniTxt(p.giorni))+'</small></div><button class="g" data-pput="'+esc(p.id)+'">Inserisci</button></div>';
@@ -670,7 +670,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       if(e.pub)h+='<div class="note">Già caricata nel calendario normale: cambiare qui non modifica quella prenotazione.</div>';
       h+='<div class="tg">'+DAYS.map(function(D2,i){return '<button data-eday="'+i+'" class="'+(pst.day===i?'on':'')+'">'+D2.w+' '+D2.n+'</button>'}).join('')+'</div>'+
          '<div class="row2"><input type="text" id="eo" placeholder="Ora (es. 10.30)" value="'+hm(pst.start)+'"><div class="tg" style="margin-top:8px">'+[10,20,30].map(function(x){return '<button data-edur="'+x+'" class="'+(pst.dur===x?'on':'')+'">'+x+'′</button>'}).join('')+'</div></div>'+
-         '<div class="row2"><button class="p" id="esave">Salva</button><button class="p s" id="edel">Togli dalla prova</button></div>';
+         '<div class="row2"><button class="p" id="esave">Salva</button><button class="p s" id="edel">Togli dalla proposta</button></div>';
     }
     $('ppanel').innerHTML=h;$('psheet').hidden=false;
     $('pcl').onclick=function(){pst=null;psheet()};
@@ -728,7 +728,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       });
       if(list.length)h+='<button class="lnk" id="bcsv">Scarica prenotazioni (CSV)</button>';
     }
-    h+='<button class="tbtn" id="ptog" aria-expanded="'+provaOpen+'"><span>'+ICO_CAL+'Calendario prova <small>('+prova.length+')</small></span><span>'+(provaOpen?'▴':'▾')+'</span></button>';
+    h+='<button class="tbtn" id="ptog" aria-expanded="'+provaOpen+'"><span>'+ICO_CAL+'Proposta di calendario <small>('+prova.length+')</small></span><span>'+(provaOpen?'▴':'▾')+'</span></button>';
     if(provaOpen)h+=provaHtml();
     var nm='';
     if(!persone.length)nm+='<div class="msg">Nessuno in elenco.</div>';
@@ -783,7 +783,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       $('pauto').onclick=function(){$('pauto').disabled=true;$('pauto').textContent='Inserisco…';autoFill().catch(function(){say('Non sono riuscito a completare l’inserimento.');asig='';loadAdmin()})};
       $('pclr').onclick=function(){
         if(!prova.length)return;
-        ask('Svuotare tutta la bozza?','Svuota').then(function(ok){if(!ok)return;
+        ask('Svuotare tutta la proposta?','Svuota').then(function(ok){if(!ok)return;
         prova.reduce(function(pr,e){return pr.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'DELETE')})},Promise.resolve()).then(function(){asig='';return loadAdmin()}).catch(function(){say('Non sono riuscito a svuotare.')});
         });
       };
@@ -793,7 +793,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         if(d<0){say('Non c’è posto nelle giornate di questa persona.');return}
         provaAdd(p,d,du).then(function(id){var e=prova.filter(function(q){return q.id===id})[0];pst={mode:'edit',id:id,day:e.day,start:e.start,dur:e.dur};asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a inserire.')});
       }});
-      if($('provacsv'))$('provacsv').onclick=function(){csvDownload('calendario-prova.csv',[['Giorno','Dalle','Alle','Nome','Matricola','Argomento']].concat(prova.slice().sort(function(x,y){return x.day*10000+x.start-(y.day*10000+y.start)}).map(function(e){var p=persBy(e.pid)||{};return [DAYS[e.day].full,hm(e.start),hm(e.start+e.dur),p.nome||'',p.matricola||'',p.argomento||'']})))};
+      if($('provacsv'))$('provacsv').onclick=function(){csvDownload('proposta-di-calendario.csv',[['Giorno','Dalle','Alle','Nome','Matricola','Argomento']].concat(prova.slice().sort(function(x,y){return x.day*10000+x.start-(y.day*10000+y.start)}).map(function(e){var p=persBy(e.pid)||{};return [DAYS[e.day].full,hm(e.start),hm(e.start+e.dur),p.nome||'',p.matricola||'',p.argomento||'']})))};
     }
   }
 
