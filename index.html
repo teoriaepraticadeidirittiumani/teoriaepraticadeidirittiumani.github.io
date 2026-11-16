@@ -103,6 +103,13 @@ table.big td.n{font-size:.9rem}
 .cal.small .axis span{font-size:.6rem}
 .cal.small .ev{font-size:.6rem;padding:0 3px;border-radius:4px}
 .ev.pv{pointer-events:auto;cursor:pointer}
+.cal.pvg .ev{font-size:.74rem;line-height:1.25;padding:3px 5px}
+.cal.pvg .ev.one{white-space:normal}
+.cal.pvg .axis span{font-size:.68rem}
+.ev i{font-style:italic}
+#ppanel .info{display:grid;gap:14px;margin:14px 2px 6px;font-size:1.02rem}
+#ppanel .info small{color:var(--mute);font-size:.78rem}
+#ppanel .info i{font-size:1.08rem}
 .ev.done{opacity:.55}
 #pgrid{margin-top:12px}
 #toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--acc);color:var(--btnink);padding:10px 16px;border-radius:12px;z-index:60;max-width:88%;text-align:center;font-size:.9rem;box-shadow:0 4px 14px rgba(0,0,0,.25)}
@@ -163,7 +170,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   var API_KEY='AIzaSyALquPqUan9betC6A3dcS8GjTGh3mGbTXY';
   var GESTIONE_EMAIL='gestione@example.com';
   var DAYS=[{w:'mer',n:2,full:'Mercoledì 2 dicembre'},{w:'gio',n:3,full:'Giovedì 3 dicembre'},{w:'ven',n:4,full:'Venerdì 4 dicembre'}];
-  var FROM=9*60,TO=19*60,STEP=10,RH=26,POLL=6000;
+  var FROM=9*60,TO=19*60;window.__TO=TO;var STEP=10,RH=26,POLL=6000;
   /* ======================== */
   /* ===== MODALITÀ ANTEPRIMA =====
      Fuori da netlify.app e github.io (per esempio dentro Claude) il sito non può collegarsi al database:
@@ -342,7 +349,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function overlapsBlock(d,a,z){return chiusure.some(function(c){return c.day===d&&a<c.end&&z>c.start})}
 
   function buildGrid(cfg){
-    var R=cfg.rh,g=document.createElement('div');g.className='cal'+(cfg.small?' small':'');
+    var TO=cfg.to||window.__TO,R=cfg.rh,g=document.createElement('div');g.className='cal'+(cfg.small?' small':'')+(cfg.pv?' pvg':'');
     g.appendChild(Object.assign(document.createElement('div'),{className:'head'}));
     DAYS.forEach(function(D){var h=document.createElement('div');h.className='head';h.innerHTML='<div class="w">'+D.w+'</div><div class="n">'+D.n+'</div><div class="m">dic</div>';g.appendChild(h)});
     var ax=document.createElement('div');ax.className='axis';
@@ -684,8 +691,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     var g=[];if(n[1])g.push(n[1]+' da sol'+(n[1]===1?'o':'i'));if(n[2])g.push(n[2]+' grupp'+(n[2]===1?'o':'i')+' da 2');if(n[3])g.push(n[3]+' grupp'+(n[3]===1?'o':'i')+' da 3');
     return '<div class="pday">Riepilogo della proposta '+esc(curPr)+'</div>'+
       '<div class="note" style="margin-top:6px"><b>'+Object.keys(stud).length+' studenti</b> · '+prova.length+' presentazioni ('+g.join(', ')+')</div>'+
-      '<table class="big"><tr><th>Giornata</th><th>Mattina</th><th>Pomeriggio</th><th>Totale</th></tr>'+rows+
-      '<tr><td><b>In tutto</b></td><td></td><td></td><td><b>'+hmin(tot)+'</b></td></tr></table>';
+      '<table class="big"><tr><th>Giornata</th><th>Mattina</th><th>Pomeriggio</th><th>Totale</th></tr>'+rows+'</table>';
   }
   function provaHtml(){
     var todo=prova.filter(function(e){return !e.pub&&pOf(e)}).length;
@@ -718,11 +724,10 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     }else{
       var e=prova.filter(function(x){return x.id===pst.id})[0],pp=e?pOf(e):null;
       if(!e){pst=null;$('psheet').hidden=true;return}
-      h+='<h2>'+esc(pp?pp.nome:'(rimosso)')+'</h2><div class="when">'+esc(pp?(pp.argomento||'—')+(pp.matricola?' · matr. '+pp.matricola:''):'')+'</div>';
-      if(e.pub)h+='<div class="note">Già caricata nel calendario normale: cambiare qui non modifica quella prenotazione.</div>';
-      h+='<div class="tg">'+DAYS.map(function(D2,i){return '<button data-eday="'+i+'" class="'+(pst.day===i?'on':'')+'">'+D2.w+' '+D2.n+'</button>'}).join('')+'</div>'+
-         '<div class="row2"><input type="text" id="eo" placeholder="Ora (es. 10.30)" value="'+hm(pst.start)+'"><div class="tg" style="margin-top:8px">'+[10,18,20,28,30,38].map(function(x){return '<button data-edur="'+x+'" class="'+(pst.dur===x?'on':'')+'">'+x+'′</button>'}).join('')+'</div></div>'+
-         '<div class="row2"><button class="p" id="esave">Salva</button><button class="p s" id="edel">Togli dalla proposta</button></div>';
+      h+='<h2>'+esc(pp?pp.nome:'(rimosso)')+'</h2>'+
+         '<div class="when">'+esc(DAYS[e.day].full)+' · '+hm(e.start)+'–'+hm(e.start+e.dur)+'</div>'+
+         '<div class="info"><div><small>Matricola</small><br><b>'+esc(pp&&pp.matricola?pp.matricola:'—')+'</b></div>'+
+         '<div><small>Tema</small><br><i>'+esc(pp&&pp.argomento?pp.argomento:'non ancora indicato')+'</i></div></div>';
     }
     $('ppanel').innerHTML=h;$('psheet').hidden=false;
     $('pcl').onclick=function(){pst=null;psheet()};
@@ -828,8 +833,8 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if($('pcsv'))$('pcsv').onclick=function(){csvDownload('elenco.csv',[['#','Nome','Matricola','Argomento','Giornata','Gruppo','Altro']].concat(persone.map(function(p,i){return [i+1,p.nome,p.matricola,p.argomento,giorniTxt(p.giorni),p.tipo==='g2'?'da 2':p.tipo==='g3'?'da 3':'da solo',p.note||'']})))};
     if($('bcsv'))$('bcsv').onclick=function(){csvDownload('prenotazioni.csv',[['Giorno','Dalle','Alle','Durata (min)','Nome','Matricola','Argomento']].concat(list.map(function(p){return [DAYS[p.day].full,hm(p.start),hm(p.start+p.dur),p.dur,p.name,p.matr||'',p.topic]})))};
     if(provaOpen){
-      $('pgrid').appendChild(buildGrid({rh:18,small:true,
-        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?' · '+esc(p.argomento):'')}})},
+      $('pgrid').appendChild(buildGrid({rh:30,small:true,pv:true,to:15*60,
+        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?'<br><i>'+esc(p.argomento)+'</i>':'')}})},
         cell:function(d,m){pst={mode:'place',d:d,m:m,dur:10};if(m+10>TO)return;psheet()},
         evclick:function(x){var e=prova.filter(function(q){return q.id===x.id})[0];if(!e)return;pst={mode:'edit',id:e.id,day:e.day,start:e.start,dur:e.dur};psheet()}}));
       a.querySelectorAll('[data-pr]').forEach(function(b){b.onclick=function(){curPr=b.getAttribute('data-pr');setPr();renderEl()}});
