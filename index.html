@@ -321,7 +321,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
-      importDef();importSet3();importSet4();
+      importDef();importSet3();importSet4();importSet5();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -665,7 +665,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function importSet4(){
     if(importing||!admin)return;
     var p5=provaAll.filter(function(e){return e.pr==='5'});
-    if(!p5.length||p5.some(function(e){return e.imp==='set4'}))return;
+    if(!p5.length||p5.some(function(e){return e.imp&&e.imp!=='set3'}))return;
     importing=true;var used={};
     SET4.reduce(function(pr,x,i){return pr.then(function(){
       var e=p5.filter(function(q){return !used[q.id]&&sameG(q.nm||(pOf(q)||{}).nome,x[3])})[0],r=byNm(x[3]);
@@ -675,6 +675,35 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     })},Promise.resolve())
     .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
     .then(function(){say('Ho aggiornato la proposta con le disponibilità fornite.')},function(){say('Non sono riuscito ad aggiornare la proposta. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
+  /* --- set5: Sofie al posto di Agostino (ven), Agostino a mercoledì, Gemma e Alexia si scambiano; applicato una volta --- */
+  function importSet5(){
+    if(importing||!admin)return;
+    var p5=provaAll.filter(function(e){return e.pr==='5'});
+    if(!p5.some(function(e){return e.imp==='set4'})||p5.some(function(e){return e.imp==='set5'}))return;
+    var f=function(n){return p5.filter(function(e){return sameG(e.nm||(pOf(e)||{}).nome,n)})[0]};
+    var so=f('Sofia Verrengia, Sofia Pierosara'),ag=f('Antonio Agostino'),ge=f('Gemma Ceccacci'),al=f('Alexia-Bianca Repezis');
+    if(!so||!ag||!ge||!al)return;
+    importing=true;
+    var ch={},put=function(e,o){var c=ch[e.id]||(ch[e.id]={pr:'5',prn:e.prn||'Proposta disponibilità fornite',nm:e.nm||undefined,chk:e.chk||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,pub:e.pub||undefined,vis:e.vis||undefined});Object.keys(o).forEach(function(k){c[k]=o[k]})};
+    var M=13*60;
+    /* giovedì: chiude il buco lasciato dalle Sofie */
+    p5.forEach(function(e){if(e.id!==so.id&&e.day===so.day&&e.start>=so.start+so.dur&&e.start<M)put(e,{start:e.start-so.dur})});
+    /* venerdì: le Sofie (40 min) al posto di Agostino, chi segue scala del necessario */
+    var shift=so.dur-ag.dur;
+    if(shift>0)p5.forEach(function(e){if(e.id!==ag.id&&e.day===ag.day&&e.start>=ag.start+ag.dur&&e.start<M)put(e,{start:e.start+shift})});
+    put(so,{day:ag.day,start:ag.start,chk:'il venerdì non erano disponibili (mercoledì primo pomeriggio o giovedì mattina)'});
+    /* Agostino a mercoledì mattina, dopo l'ultimo */
+    var endMer=p5.filter(function(e){return e.day===0&&e.start<M&&e.id!==ag.id}).reduce(function(t,e){return Math.max(t,e.start+e.dur)},8*60);
+    put(ag,{day:0,start:endMer,chk:'il mercoledì non era disponibile (giovedì o venerdì, fino alle 15)'});
+    /* Gemma al posto di Alexia (dopo lo scorrimento del giovedì), Alexia al posto di Gemma */
+    var alNow=ch[al.id]||al,geNow=ch[ge.id]||ge;
+    var aD=alNow.day,aS=alNow.start;
+    put(al,{day:geNow.day,start:geNow.start});put(ge,{day:aD,start:aS});
+    Object.keys(ch).reduce(function(pr,id,i){return pr.then(function(){var c=ch[id];c.imp='set5';c.ts=Date.now()+i;return gdb('/gestione/prova/'+encodeURIComponent(id),'PUT',c)})},Promise.resolve())
+    .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
+    .then(function(){say('Ho spostato le Sofie, Antonio Agostino, Gemma e Alexia.')},function(){say('Non sono riuscito a fare tutti gli spostamenti. Avvisa Claude.')})
     .then(function(){importing=false});
   }
   function importDef(){
