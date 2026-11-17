@@ -331,7 +331,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
-      importDef();importSet3();importSet4();importSet5();importSet6();importSet7();removeSet2();
+      importDef();importSet3();importSet4();importSet5();importSet6();importSet7();importSet8();removeSet2();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -821,6 +821,23 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     ops.reduce(function(pr,o){return pr.then(function(){return gdb(o[0],o[1],o[2])})},Promise.resolve())
     .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
     .then(function(){say('Ho rifatto la proposta su mercoledì e giovedì con le disponibilità aggiornate.')},function(){say('Non sono riuscito a rifare tutta la proposta. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
+  /* --- set8: giovedì solo 8–13. Carola a mercoledì pomeriggio, Arianna dopo di lei; gli altri cinque del giovedì pomeriggio tolti (tornano in «Non ancora inseriti"); applicato una volta --- */
+  function importSet8(){
+    if(importing||!admin)return;
+    var p5=provaAll.filter(function(e){return e.pr==='5'});
+    if(!p5.some(function(e){return e.imp==='set7'})||p5.some(function(e){return e.imp==='set8'}))return;
+    var f=function(n){return p5.filter(function(e){return sameG(e.nm||(pOf(e)||{}).nome,n)})[0]};
+    importing=true;var ops=[],i=0;
+    var mv=function(n,o){var e=f(n);if(!e)return;var c={pr:'5',prn:e.prn||'Proposta disponibilità fornite',nm:e.nm||undefined,chk:e.chk||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,pub:e.pub||undefined,vis:e.vis||undefined};Object.keys(o).forEach(function(k){c[k]=o[k]});c.imp='set8';c.ts=Date.now()+(i++);ops.push(['/gestione/prova/'+encodeURIComponent(e.id),'PUT',c])};
+    mv('Carola Fabrizi',{day:0,start:1010,chk:undefined});
+    mv('Arianna Mencancini',{day:0,start:1040});
+    ['Antonio Agostino','Angela Di Cesare','Sara Fasciano','Alice Gianni','Marta Georgescu'].forEach(function(n){var e=f(n);if(e)ops.push(['/gestione/prova/'+encodeURIComponent(e.id),'DELETE'])});
+    if(!ops.length){importing=false;return}
+    ops.reduce(function(pr,o){return pr.then(function(){return gdb(o[0],o[1],o[2])})},Promise.resolve())
+    .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
+    .then(function(){say('Giovedì ora finisce alle 13: Carola è a mercoledì pomeriggio, gli altri cinque sono in «Non ancora inseriti».')},function(){say('Non sono riuscito a fare tutti gli spostamenti. Avvisa Claude.')})
     .then(function(){importing=false});
   }
   /* --- togli le quattro proposte (mattina, pomeriggio, alternate): restano solo nel codice (SET2) per poterle rimettere --- */
