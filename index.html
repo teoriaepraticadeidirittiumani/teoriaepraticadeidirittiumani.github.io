@@ -40,6 +40,7 @@ h1{font-size:1.3rem;font-weight:bold;line-height:1.3;margin:6px 4px 6px}
 .axis span{position:absolute;top:-8px;right:5px;font-size:.7rem;color:var(--mute)}
 .col{border-left:1px solid var(--line);position:relative}
 .cal.ro .cell{cursor:default;-webkit-tap-highlight-color:transparent}
+.cal .ev.tap{pointer-events:auto;cursor:pointer}
 .cell{display:block;width:100%;height:26px;border:0;border-top:1px solid var(--soft);background:none;padding:0;cursor:pointer}
 .cell.h{border-top-color:var(--line)}
 .ev{position:absolute;background:var(--accbg);border-left:3px solid var(--acc);border-radius:5px;padding:1px 4px;overflow:hidden;pointer-events:none;font-size:.72rem;line-height:1.2;z-index:1;word-break:break-word}
@@ -404,6 +405,31 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     });
     return g;
   }
+  /* scheda informativa di una persona nel calendario (matricola solo con la password) */
+  function infoSheet(i){
+    pst=null;
+    var h='<button class="x" id="pcl" aria-label="Chiudi">×</button><h2>'+esc(i.name)+'</h2>'+
+      '<div class="when">'+esc(DAYS[i.day].full)+' · '+hm(i.start)+'–'+hm(i.start+i.dur)+(i.asg?' · <small>in azzurro, visibile solo con la password</small>':'')+'</div>'+
+      '<div class="info">'+(admin?'<div><small>Matricola</small><br><b>'+esc(i.matr||'—')+'</b></div>':'')+
+      '<div><small>Tema</small><br><i>'+esc(i.topic||'non ancora indicato')+'</i></div></div>';
+    $('ppanel').innerHTML=h;$('psheet').hidden=false;
+    $('pcl').onclick=function(){$('psheet').hidden=true};
+  }
+  /* rimanda alla proposta tutte le persone in azzurro, togliendole dal calendario */
+  function backToProva(){
+    if(busy)return;var list=assegnati.slice();if(!list.length)return;
+    ask('Togliere dal calendario '+(list.length>1?'le '+list.length+' persone in azzurro':'la persona in azzurro')+' e rimandarle alla proposta? Potrai ricaricarle con «Carica nel calendario normale».','Rimanda').then(function(ok){if(!ok)return;
+      busy=true;var n=0;
+      list.reduce(function(pr,a){return pr.then(function(){
+        var linked=provaAll.filter(function(e){return e.pub===a.id});
+        var step=linked.length?linked.reduce(function(p2,e){return p2.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,prn:e.prn||undefined,chk:e.chk||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now()})})},Promise.resolve())
+          :gdb('/gestione/prova','POST',{pr:'5',prn:'Proposta disponibilità fornite',pid:a.pid||'',nm:a.name,day:a.day,start:a.start,dur:a.dur,ts:Date.now()+n});
+        return step.then(function(){return gdb('/gestione/assegnati/'+encodeURIComponent(a.id),'DELETE')}).then(function(){n++});
+      })},Promise.resolve())
+      .then(function(){say(n>1?'Ho rimandato alla proposta '+n+' persone.':'Ho rimandato alla proposta la persona.')},function(){say('Rimandate '+n+' persone, poi si è interrotto: controlla il calendario.')})
+      .then(function(){busy=false;sig='';asig='';return load()}).then(loadAdmin);
+    });
+  }
   function renderCh(){
     var a=$('chBox');
     if(!admin){a.innerHTML='';return}
@@ -422,7 +448,9 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
          '<button class="p" id="chadd">Aggiungi</button></div>';
     }
     if(assegnati.length)h+='<button class="tbtn" id="allvis"><span><svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Rendi visibili tutte le persone in azzurro <small>('+assegnati.length+')</small></span></button>';
+    if(assegnati.length)h+='<button class="tbtn" id="allback"><span><svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Rimanda alla proposta le persone in azzurro <small>('+assegnati.length+')</small></span></button>';
     a.innerHTML=h;
+    if($('allback'))$('allback').onclick=backToProva;
     if($('allvis'))$('allvis').onclick=function(){
       var nn=assegnati.length;
       ask('Rendere visibili a tutti '+(nn>1?'le '+nn+' persone in azzurro':'la persona in azzurro')+' nel calendario? Compariranno nome e cognome, orario e argomento. Le matricole restano riservate.','Rendi visibili').then(function(ok){if(ok)makeVisible(assegnati.slice())});
@@ -446,10 +474,10 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     var cal=$('cal');cal.innerHTML='';
     cal.appendChild(buildGrid({rh:RH,small:false,
       items:function(d){var o=chiusure.filter(function(c){return c.day===d}).map(function(c){return {start:c.start,dur:c.end-c.start,full:true,cls:'blk',html:'Slot non disponibile'}});
-        o=o.concat(bookings.filter(function(b){return b.day===d}).map(function(b){return {start:b.start,dur:b.dur,html:'<b>'+esc(b.name)+'</b>'+(b.topic?' · '+esc(b.topic):'')}}));
-        if(admin)assegnati.forEach(function(a){if(a.day===d)o.push({start:a.start,dur:a.dur,cls:'imp',html:'<b>'+esc(a.name)+'</b>'+(a.topic?' · '+esc(a.topic):'')})});
+        o=o.concat(bookings.filter(function(b){return b.day===d}).map(function(b){return {start:b.start,dur:b.dur,cls:'tap',info:{name:b.name,topic:b.topic,day:b.day,start:b.start,dur:b.dur,matr:matricole[b.id]||''},html:'<b>'+esc(b.name)+'</b>'+(b.topic?' · '+esc(b.topic):'')}}));
+        if(admin)assegnati.forEach(function(a){if(a.day===d)o.push({start:a.start,dur:a.dur,cls:'imp tap',info:{name:a.name,topic:a.topic,day:a.day,start:a.start,dur:a.dur,matr:a.matricola||'',asg:true},html:'<b>'+esc(a.name)+'</b>'+(a.topic?' · '+esc(a.topic):'')})});
         return o},
-      ro:true,cell:function(){}}));
+      ro:true,cell:function(){},evclick:function(x){if(x.info)infoSheet(x.info)}}));
     renderCh();
   }
 
