@@ -321,7 +321,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
-      importDef();importSet3();importSet4();importSet5();
+      importDef();importSet3();importSet4();importSet5();importSet6();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -704,6 +704,28 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     Object.keys(ch).reduce(function(pr,id,i){return pr.then(function(){var c=ch[id];c.imp='set5';c.ts=Date.now()+i;return gdb('/gestione/prova/'+encodeURIComponent(id),'PUT',c)})},Promise.resolve())
     .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
     .then(function(){say('Ho spostato le Sofie, Antonio Agostino, Gemma e Alexia.')},function(){say('Non sono riuscito a fare tutti gli spostamenti. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
+  /* --- set6: Sofie a giovedì mattina (in coda), Agostino torna a venerdì al posto delle Sofie; applicato una volta --- */
+  function importSet6(){
+    if(importing||!admin)return;
+    var p5=provaAll.filter(function(e){return e.pr==='5'});
+    if(!p5.some(function(e){return e.imp==='set5'})||p5.some(function(e){return e.imp==='set6'}))return;
+    var f=function(n){return p5.filter(function(e){return sameG(e.nm||(pOf(e)||{}).nome,n)})[0]};
+    var so=f('Sofia Verrengia, Sofia Pierosara'),ag=f('Antonio Agostino');
+    if(!so||!ag)return;
+    importing=true;
+    var ch={},M=13*60,put=function(e,o){var c=ch[e.id]||(ch[e.id]={pr:'5',prn:e.prn||'Proposta disponibilità fornite',nm:e.nm||undefined,chk:e.chk||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,pub:e.pub||undefined,vis:e.vis||undefined});Object.keys(o).forEach(function(k){c[k]=o[k]})};
+    /* venerdì: Agostino (30) al posto delle Sofie (40), chi segue risale */
+    var back=so.dur-ag.dur;
+    if(back>0)p5.forEach(function(e){if(e.id!==so.id&&e.day===so.day&&e.start>=so.start+so.dur&&e.start<M)put(e,{start:e.start-back})});
+    put(ag,{day:so.day,start:so.start,chk:undefined});
+    /* giovedì mattina: Sofie in coda */
+    var endGio=p5.filter(function(e){return e.day===1&&e.start<M&&e.id!==so.id&&e.id!==ag.id}).reduce(function(t,e){return Math.max(t,e.start+e.dur)},8*60);
+    put(so,{day:1,start:endGio,chk:undefined});
+    Object.keys(ch).reduce(function(pr,id,i){return pr.then(function(){var c=ch[id];c.imp='set6';c.ts=Date.now()+i;return gdb('/gestione/prova/'+encodeURIComponent(id),'PUT',c)})},Promise.resolve())
+    .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
+    .then(function(){say('Ho spostato le Sofie a giovedì e Antonio Agostino a venerdì.')},function(){say('Non sono riuscito a fare tutti gli spostamenti. Avvisa Claude.')})
     .then(function(){importing=false});
   }
   function importDef(){
