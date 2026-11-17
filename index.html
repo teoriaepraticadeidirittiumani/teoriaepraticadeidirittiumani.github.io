@@ -390,7 +390,9 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         var e=document.createElement('div');e.className='ev '+(x.cls||'');
         var end=Math.min(x.start+x.dur,TO);
         e.style.top=((x.start-FROM)/STEP*R+1)+'px';e.style.height=Math.max(R-3,(end-x.start)/STEP*R-3)+'px';e.style.left='0';e.style.width='100%';
-        e.innerHTML=x.html;col.appendChild(e);
+        e.innerHTML=x.html;
+        if(cfg.evclick)e.onclick=function(ev){ev.stopPropagation();cfg.evclick(x)};
+        col.appendChild(e);
       });
       evs.forEach(function(x){
         var e=document.createElement('div');e.className='ev'+(x.dur<20?' one':'')+(x.cls?' '+x.cls:'');
@@ -409,6 +411,11 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   /* scheda informativa di una persona nel calendario (matricola solo con la password) */
   function infoSheet(i){
     pst=null;
+    if(i.blk){
+      $('ppanel').innerHTML='<button class="x" id="pcl" aria-label="Chiudi">×</button><h2>Slot non disponibile</h2><div class="when">'+esc(DAYS[i.day].full)+' · '+hm(i.start)+'–'+hm(i.start+i.dur)+'</div><p style="margin:12px 2px 4px;line-height:1.45">Questo slot non è disponibile: la professoressa non ha indicato questa fascia oraria per le presentazioni.</p>';
+      $('psheet').classList.add('center');$('psheet').hidden=false;
+      $('pcl').onclick=function(){$('psheet').hidden=true};return;
+    }
     var h='<button class="x" id="pcl" aria-label="Chiudi">×</button><h2>'+esc(i.name)+'</h2>'+
       '<div class="when">'+esc(DAYS[i.day].full)+' · '+hm(i.start)+'–'+hm(i.start+i.dur)+(i.asg?' · <small>in azzurro, visibile solo con la password</small>':'')+'</div>'+
       '<div class="info">'+(admin?'<div><small>Matricola</small><br><b>'+esc(i.matr||'—')+'</b></div>':'')+
@@ -475,7 +482,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function render(){
     var cal=$('cal');cal.innerHTML='';
     cal.appendChild(buildGrid({rh:RH,small:false,
-      items:function(d){var o=chiusure.filter(function(c){return c.day===d}).map(function(c){return {start:c.start,dur:c.end-c.start,full:true,cls:'blk',html:'Slot non disponibile'}});
+      items:function(d){var o=chiusure.filter(function(c){return c.day===d}).map(function(c){return {start:c.start,dur:c.end-c.start,full:true,cls:'blk tap',info:{blk:true,day:c.day,start:c.start,dur:c.end-c.start},html:'Slot non disponibile'}});
         o=o.concat(bookings.filter(function(b){return b.day===d}).map(function(b){return {start:b.start,dur:b.dur,cls:'tap',info:{name:b.name,topic:b.topic,day:b.day,start:b.start,dur:b.dur,matr:matricole[b.id]||''},html:'<b>'+esc(b.name)+'</b>'+(b.topic?' · '+esc(b.topic):'')}}));
         if(admin)assegnati.forEach(function(a){if(a.day===d)o.push({start:a.start,dur:a.dur,cls:'imp tap',info:{name:a.name,topic:a.topic,day:a.day,start:a.start,dur:a.dur,matr:a.matricola||'',asg:true},html:'<b>'+esc(a.name)+'</b>'+(a.topic?' · '+esc(a.topic):'')})});
         return o},
