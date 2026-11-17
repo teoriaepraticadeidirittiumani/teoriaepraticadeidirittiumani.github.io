@@ -226,7 +226,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       return done(null);
     };
   }
-  var bookings=[],chiusure=[],sig='',persone=[],prova=[],provaAll=[],curPr='1',extraPr=[],assegnati=[],chOpen=false,chDay=0,matricole={},asig='',pst=null,provaOpen=false,open=null,dur=10,saved='',savedM='',token='',admin=false,busy=false,page='',giorniSel=[],calFirst=false,ready=false,dDone=false,dform=newForm(),dform2={nome:'',cognome:'',matricola:'',argomento:''},d2Done=false;
+  var bookings=[],chiusure=[],sig='',persone=[],prova=[],provaAll=[],curPr='1',extraPr=[],assegnati=[],chOpen=false,chDay=0,matricole={},asig='',pst=null,provaOpen=false,open=null,dur=10,saved='',savedM='',token='',admin=false,busy=false,page='',giorniSel=[],calFirst=false,ready=false,dDone=false,dform=newForm(),dform2={nome:'',cognome:'',matricola:'',argomento:''},d2Done=false,dform3={matricola:'',giorni:[],altro:''},d3Done=false;
   var auth={t:null,r:null,exp:0};
   var $=function(i){return document.getElementById(i)};
   try{saved=localStorage.getItem('nome')||'';savedM=localStorage.getItem('matr')||'';token=localStorage.getItem('tok')||'';if(!token){token='t'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('tok',token)}}catch(e){if(!token)token='t'+Math.random().toString(36).slice(2)}
@@ -295,9 +295,10 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       if(o&&typeof o==='object'){Object.keys(o).forEach(function(k){var x=o[k]||{};list.push({id:k,nome:x.nome||'',matricola:x.matricola||'',argomento:x.argomento||'',giorni:String(x.giorni||''),ts:x.ts||0,src:'man',note:'',tipo:'solo'})})}
       var dp=r[4],remap={},best={};
       if(dp&&typeof dp==='object'){
-        var ups=[];
+        var ups=[],gups=[];
         Object.keys(dp).forEach(function(k){
           var x=dp[k]||{};
+          if(x.kind==='giorni'){gups.push({id:k,matricola:String(x.matricola||''),giorni:String(x.giorni||''),note:String(x.note||'').trim(),ts:x.ts||0});return}
           if(x.kind==='argomento'){ups.push({id:k,nome:((x.nome||'')+' '+(x.cognome||'')).trim(),matricola:String(x.matricola||''),argomento:String(x.argomento||'').trim(),ts:x.ts||0});return}
           var nome=((x.nome||'')+' '+(x.cognome||'')).trim(),kk=nk(nome);
           var rec={id:k,nome:nome,matricola:x.matricola||'',argomento:(String(x.argomento||'').trim()==='.')?'':(x.argomento||''),giorni:String(x.giorni||''),ts:x.ts||0,src:'disp',note:x.note||'',tipo:x.tipo||'solo',all:[k]};
@@ -313,6 +314,13 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
           var ok=toks(u.matricola)[0]||nk(u.nome),o=orph[ok];
           if(o){o.all.push(u.id);remap[u.id]=o.id;if(u.ts>=o.ts){o.argomento=u.argomento;o.ts=u.ts}return}
           o={id:u.id,nome:u.nome,matricola:u.matricola,argomento:u.argomento,giorni:'',ts:u.ts,src:'disp',note:'',tipo:'solo',all:[u.id],orph:true};orph[ok]=o;list.push(o);
+        });
+      }
+      if(gups&&gups.length){
+        gups.sort(function(a,b){return a.ts-b.ts}).forEach(function(u){
+          var ts=toks(u.matricola),tg=list.filter(function(p){return toks(p.matricola).some(function(t){return ts.indexOf(t)>=0})})[0];
+          if(tg){if(tg.all)tg.all.push(u.id);remap[u.id]=tg.id;tg.giorni=u.giorni;tg.note=(u.note?u.note+' ':'')+'(disponibilità aggiornata)';return}
+          list.push({id:u.id,nome:'Matricola '+u.matricola+' (aggiornamento senza registrazione)',matricola:u.matricola,argomento:'',giorni:u.giorni,ts:u.ts,src:'disp',note:u.note,tipo:'solo',all:[u.id],orph:true});
         });
       }
       list.sort(function(a,b){return a.ts-b.ts});
@@ -587,6 +595,34 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     dform=JSON.parse(JSON.stringify(r));dform.auto=key;
     renderDisp();say('Ho ricompilato i tuoi dati: controlla e modifica quello che serve.');
   }
+  function updSection(){
+    var f=dform3;
+    if(d3Done)return '<div class="dform sep"><h2 class="h2c">Aggiorna disponibilità</h2><div class="okbox"><b>Grazie, la nuova disponibilità è stata inviata.</b></div><button class="p s" id="d3again">Invia un altro aggiornamento</button></div>';
+    return '<div class="dform sep"><h2 class="h2c" style="margin-bottom:2px">Aggiorna disponibilità</h2><div class="hint" style="text-align:center;margin:0 0 12px">(sezione riservata a chi ha già inviato la propria disponibilità e deve cambiare le giornate: non serve riscrivere nome e argomento)</div>'+
+      '<input type="text" id="um" placeholder="Matricola" maxlength="40" inputmode="numeric" value="'+esc(f.matricola)+'">'+
+      '<div class="hint">Usa la stessa matricola della registrazione (se siete in gruppo, basta quella di una persona). È visibile solo al coordinamento organizzativo.</div>'+
+      '<div class="hint" style="margin-top:12px">Nuove giornate in cui sei disponibile, puoi sceglierne più di una:</div>'+
+      '<div class="tg">'+DAYS.map(function(D,i){return '<button data-ug="'+i+'" class="'+(f.giorni.indexOf(i)>=0?'on':'')+'">'+D.full.split(' ')[0]+' '+D.n+'</button>'}).join('')+'</div>'+
+      '<div class="hint" style="margin-top:12px">Altro (facoltativo): solo la mattina, solo il pomeriggio, dopo una certa ora…</div>'+
+      '<textarea id="ux" maxlength="200" style="min-height:76px" placeholder="Es. mercoledì solo il pomeriggio">'+esc(f.altro)+'</textarea>'+
+      '<button class="p" id="ugo">Aggiorna disponibilità</button></div>';
+  }
+  function bindUpd(){
+    var f=dform3;
+    if(d3Done){if($('d3again'))$('d3again').onclick=function(){d3Done=false;renderDisp()};return}
+    $('um').oninput=function(){f.matricola=$('um').value};
+    $('ux').oninput=function(){f.altro=$('ux').value};
+    document.querySelectorAll('[data-ug]').forEach(function(b){b.onclick=function(){var i=+b.getAttribute('data-ug'),k=f.giorni.indexOf(i);if(k>=0)f.giorni.splice(k,1);else f.giorni.push(i);b.className=f.giorni.indexOf(i)>=0?'on':''}});
+    $('ugo').onclick=function(){
+      var mt=f.matricola.trim();
+      if(!mt){say('Scrivi la matricola.');return}
+      if(!f.giorni.length){say('Scegli almeno una giornata.');return}
+      if(busy)return;busy=true;$('ugo').disabled=true;$('ugo').textContent='Invio…';
+      fetch(DB+'/disponibilita.json',{method:'POST',body:JSON.stringify({kind:'giorni',nome:'',cognome:'',matricola:mt,giorni:f.giorni.slice().sort().join(''),note:f.altro.trim(),ts:Date.now()})})
+        .then(function(r){if(!r.ok)throw new Error(r.status);busy=false;dform3={matricola:'',giorni:[],altro:''};d3Done=true;renderDisp()})
+        .catch(function(){busy=false;if($('ugo')){$('ugo').disabled=false;$('ugo').textContent='Aggiorna disponibilità'}say('Non sono riuscito a inviare. Riprova tra poco.')});
+    };
+  }
   function argSection(){
     var f=dform2;
     if(d2Done)return '<div class="dform sep"><h2 class="h2c">Argomento</h2><div class="okbox"><b>Grazie, l’argomento è stato inviato.</b></div><button class="p s" id="d2again">Invia un altro argomento</button></div>';
@@ -616,9 +652,9 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     var a=$('pageDisp'),f=dform;
     if(dDone){
       a.innerHTML='<div class="dform"><h2 class="h2c">Disponibilità</h2><div class="okbox"><b>Grazie, la tua disponibilità è stata inviata.</b><br>Riceverai ulteriori informazioni dal coordinamento organizzativo.</div><button class="p s" id="dagain">Invia un’altra disponibilità</button></div>';
-      a.innerHTML+=argSection();
+      a.innerHTML+=updSection()+argSection();
       $('dagain').onclick=function(){dDone=false;renderDisp()};
-      bindArg();
+      bindUpd();bindArg();
       return;
     }
     var n=f.mode==='g3'?3:f.mode==='g2'?2:1;
@@ -636,7 +672,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       '<div class="tg">'+DAYS.map(function(D,i){return '<button data-dg="'+i+'" class="'+(f.giorni.indexOf(i)>=0?'on':'')+'">'+D.full.split(' ')[0]+' '+D.n+'</button>'}).join('')+'</div>'+
       '<div class="hint" style="margin-top:12px">Altro (facoltativo): scrivi eventuali disponibilità più specifiche, per esempio solo la mattina, solo il pomeriggio, dopo una certa ora…</div>'+
       '<textarea id="dx" maxlength="200" style="min-height:76px" placeholder="Es. mercoledì solo il pomeriggio">'+esc(f.altro)+'</textarea>'+
-      '<button class="p" id="dgo">Invia disponibilità</button></div>'+argSection();
+      '<button class="p" id="dgo">Invia disponibilità</button></div>'+updSection()+argSection();
     a.innerHTML=h;
     a.querySelectorAll('[data-dm]').forEach(function(b){b.onclick=function(){var v=b.getAttribute('data-dm');f.mode=v==='gruppo'?(f.mode==='g3'?'g3':'g2'):v;renderDisp()}});
     for(var q=0;q<n;q++){(function(q){
@@ -666,7 +702,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
           saveReg(reg);dform=newForm();dDone=true;renderDisp();window.scrollTo(0,0)})
         .catch(function(){busy=false;if($('dgo')){$('dgo').disabled=false;$('dgo').textContent='Invia disponibilità'}say('Non sono riuscito a inviare. Riprova tra poco.')});
     };
-    bindArg();
+    bindUpd();bindArg();
   }
 
   /* ---------- pagina Elenco (riservata) ---------- */
