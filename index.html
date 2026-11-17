@@ -121,6 +121,9 @@ table.big td.n{font-size:.9rem}
 @media(min-width:760px){.cal.pvg .ev{font-size:.84rem;padding:4px 7px}.cal.pvg .ev b{font-size:.78rem}.cal.pvg .ev .tm{font-size:.84rem}#pgrid{padding:0 20px}}
 .cal.pvg .axis span{font-size:.68rem}
 .ev i{font-style:italic}
+.mv{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}.mv .lb{font-size:.82rem;color:var(--mute);margin:10px 2px 0}
+.mv select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-top:8px;font:inherit;color:inherit;-webkit-appearance:none;appearance:none}
+.dstep{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-top:8px;padding:0 4px}.dstep button{border:0;background:none;font-size:1.3rem;width:40px;height:40px;cursor:pointer;color:var(--acc)}.dstep button:disabled{opacity:.3;cursor:default}.dstep span{font-size:.95rem}
 #ppanel .info{display:grid;gap:14px;margin:14px 2px 6px;font-size:1.02rem}
 #ppanel .info small{color:var(--mute);font-size:.78rem}
 #ppanel .info i{font-size:1.08rem}
@@ -796,6 +799,13 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
          '<div class="when">'+esc(DAYS[e.day].full)+' · '+hm(e.start)+'–'+hm(e.start+e.dur)+'</div>'+
          '<div class="info"><div><small>Matricola</small><br><b>'+esc(pp&&pp.matricola?pp.matricola:'—')+'</b></div>'+
          '<div><small>Tema</small><br><i>'+esc(pp&&pp.argomento?pp.argomento:'non ancora indicato')+'</i></div></div>';
+      var others=prova.filter(function(x){return x.day===pst.day&&x.id!==pst.id}).sort(function(x,y){return x.start-y.start});
+      h+='<div class="mv"><b>Sposta</b>'+
+         '<div class="seg">'+DAYS.map(function(D,i){return '<button data-eday="'+i+'" class="'+(pst.day===i?'on':'')+'">'+esc(D.w)+' '+D.n+'</button>'}).join('')+'</div>'+
+         '<div class="row2"><div><div class="lb">Dalle</div><input type="text" id="eo" inputmode="decimal" placeholder="es. 10.30" value="'+hm(pst.start)+'"></div>'+
+         '<div><div class="lb">Durata</div><div class="dstep"><button data-edur="'+(pst.dur-10)+'"'+(pst.dur>10?'':' disabled')+' aria-label="Meno 10 minuti">−</button><span>'+pst.dur+' min</span><button data-edur="'+(pst.dur+10)+'" aria-label="Più 10 minuti">+</button></div></div></div>'+
+         (others.length?'<select id="eafter"><option value="">Metti subito dopo…</option>'+others.map(function(x){var q=pOf(x);return '<option value="'+(x.start+x.dur)+'">'+hm(x.start)+'–'+hm(x.start+x.dur)+' · '+esc(q?q.nome:'(rimosso)')+'</option>'}).join('')+'</select>':'')+
+         '<button class="p" id="esave">Salva</button><button class="lnk" id="edel">Togli dalla proposta</button></div>';
     }
     $('ppanel').innerHTML=h;$('psheet').hidden=false;
     $('pcl').onclick=function(){pst=null;psheet()};
@@ -808,7 +818,8 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     }});
     var keepT=function(){var t=$('eo')?$('eo').value:'';var m=t.match(/^(\d{1,2})[:.](\d{2})$/);if(m)pst.start=(+m[1])*60+(+m[2])};
     $('ppanel').querySelectorAll('[data-eday]').forEach(function(b){b.onclick=function(){keepT();pst.day=+b.getAttribute('data-eday');psheet()}});
-    $('ppanel').querySelectorAll('[data-edur]').forEach(function(b){b.onclick=function(){keepT();pst.dur=+b.getAttribute('data-edur');psheet()}});
+    $('ppanel').querySelectorAll('[data-edur]').forEach(function(b){b.onclick=function(){if(b.disabled)return;keepT();pst.dur=Math.max(10,+b.getAttribute('data-edur'));psheet()}});
+    if($('eafter'))$('eafter').onchange=function(){var v=$('eafter').value;if(v===''){return}pst.start=+v;psheet()};
     if($('esave'))$('esave').onclick=function(){
       var m=$('eo').value.trim().match(/^(\d{1,2})[:.](\d{2})$/);
       if(!m){say('Scrivi l’ora così: 10.30');return}
