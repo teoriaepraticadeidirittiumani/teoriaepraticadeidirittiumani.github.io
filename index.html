@@ -602,7 +602,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       '<input type="text" id="um" placeholder="Matricola" maxlength="40" inputmode="numeric" value="'+esc(f.matricola)+'">'+
       '<div class="hint">Usa la stessa matricola della registrazione (se siete in gruppo, basta quella di una persona). È visibile solo al coordinamento organizzativo.</div>'+
       '<div class="hint" style="margin-top:12px">Nuove giornate in cui sei disponibile, puoi sceglierne più di una:</div>'+
-      '<div class="tg">'+DAYS.map(function(D,i){return '<button data-ug="'+i+'" class="'+(f.giorni.indexOf(i)>=0?'on':'')+'">'+D.full.split(' ')[0]+' '+D.n+'</button>'}).join('')+'</div>'+
+      '<div class="tg" style="grid-template-columns:1fr 1fr">'+DAYS.slice(0,2).map(function(D,i){return '<button data-ug="'+i+'" class="'+(f.giorni.indexOf(i)>=0?'on':'')+'">'+D.full.split(' ')[0]+' '+D.n+'</button>'}).join('')+'</div>'+
       '<div class="hint" style="margin-top:12px">Altro (facoltativo): solo la mattina, solo il pomeriggio, dopo una certa ora…</div>'+
       '<textarea id="ux" maxlength="200" style="min-height:76px" placeholder="Es. mercoledì solo il pomeriggio">'+esc(f.altro)+'</textarea>'+
       '<button class="p" id="ugo">Aggiorna disponibilità</button></div>';
