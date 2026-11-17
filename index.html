@@ -321,7 +321,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
-      importDef();importSet3();importSet4();importSet5();importSet6();
+      importDef();importSet3();importSet4();importSet5();importSet6();removeSet2();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -728,6 +728,17 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     .then(function(){say('Ho spostato le Sofie a giovedì e Antonio Agostino a venerdì.')},function(){say('Non sono riuscito a fare tutti gli spostamenti. Avvisa Claude.')})
     .then(function(){importing=false});
   }
+  /* --- togli le quattro proposte (mattina, pomeriggio, alternate): restano solo nel codice (SET2) per poterle rimettere --- */
+  function removeSet2(){
+    if(importing||!admin)return;
+    var del=provaAll.filter(function(e){return e.imp==='set2'||/\(precedente\)$/.test(e.prn||'')});
+    if(!del.length)return;
+    importing=true;
+    del.reduce(function(pr,e){return pr.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'DELETE')})},Promise.resolve())
+    .then(function(){curPr='5';asig='';return loadAdmin()})
+    .then(function(){say('Ho tolto le altre proposte: resta «disponibilità fornite».')},function(){say('Non sono riuscito a togliere tutte le proposte. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
   function importDef(){
     return; /* disattivato: le quattro proposte sono già state caricate; non va rifatto da solo (cancellerebbe anche la proposta 5) */
     if(importing||!admin)return;
@@ -759,8 +770,8 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function prLabel(id){var l=PRL[id];if(l&&provaAll.some(function(e){return e.pr===id&&(e.imp==='set2'||e.imp==='set3'||e.imp==='set4')}))return '<b class="pt">'+esc(l[0])+'</b><i class="ps">'+esc(l[1])+'</i>';return '<b class="pt">'+esc(prName(id))+'</b>'}
   function prName(id){var e=provaAll.filter(function(q){return q.pr===id&&q.prn})[0];return e?e.prn:'Proposta '+id}
   var prInit=false;
-  function setPr(){if(!prInit&&provaAll.some(function(e){return e.pr==='5'})){prInit=true;if(curPr==='1')curPr='5'}prova=provaAll.filter(function(e){return e.pr===curPr})}
-  function prList(){var o={'1':1};o[curPr]=1;provaAll.forEach(function(e){o[e.pr]=1});extraPr.forEach(function(x){o[x]=1});var rk=function(x){return x==='5'?-1:+x};return Object.keys(o).sort(function(a,b){return rk(a)-rk(b)})}
+  function setPr(){var has5=provaAll.some(function(e){return e.pr==='5'});if(!prInit&&has5){prInit=true;if(curPr==='1')curPr='5'}if(has5&&extraPr.indexOf(curPr)<0&&!provaAll.some(function(e){return e.pr===curPr}))curPr='5';prova=provaAll.filter(function(e){return e.pr===curPr})}
+  function prList(){var o={};if(!provaAll.length&&!extraPr.length)o['1']=1;o[curPr]=1;provaAll.forEach(function(e){o[e.pr]=1});extraPr.forEach(function(x){o[x]=1});var rk=function(x){return x==='5'?-1:+x};return Object.keys(o).sort(function(a,b){return rk(a)-rk(b)})}
   /* abbinamento nomi tollerante: accenti, ordine nome/cognome, piccoli errori di battitura */
   function nrm(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z ]+/g,' ').split(/\s+/).filter(Boolean).sort().join(' ')}
   function mems(x){return String(x||'').split(/\s*(?:,|;|\+|&|\be\b|\bE\b)\s*/).map(nrm).filter(Boolean)}
