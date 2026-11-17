@@ -331,7 +331,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
-      importDef();importSet3();importSet4();importSet5();importSet6();removeSet2();
+      importDef();importSet3();importSet4();importSet5();importSet6();importSet7();removeSet2();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -799,6 +799,28 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     Object.keys(ch).reduce(function(pr,id,i){return pr.then(function(){var c=ch[id];c.imp='set6';c.ts=Date.now()+i;return gdb('/gestione/prova/'+encodeURIComponent(id),'PUT',c)})},Promise.resolve())
     .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
     .then(function(){say('Ho spostato le Sofie a giovedì e Antonio Agostino a venerdì.')},function(){say('Non sono riuscito a fare tutti gli spostamenti. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
+  /* --- set7: venerdì annullato; nuova proposta su mer 2 (8–13, 14–19) e gio 3 (8–13) con le disponibilità aggiornate; applicata una volta --- */
+  var SET7=[[0, 480, 30, "Alice Morelli", ""], [0, 510, 30, "Martina Benevento", ""], [0, 540, 30, "Emanuela Clemente", ""], [0, 570, 30, "Beatrice Bindi", ""], [0, 600, 50, "Attilio Perna, Francesco Kakpo, Stefano Monti", ""], [0, 650, 30, "Francesca Romana Lucarelli", ""], [0, 680, 30, "Gemma Ceccacci", ""], [0, 710, 30, "Aurora Tratzi", ""], [0, 740, 30, "Alexia-Bianca Repezis", ""],
+    [0, 840, 40, "Elisa Caldararo, Simone Leo", ""], [0, 880, 30, "Exauce Kisolokele", ""], [0, 910, 30, "Denisa Ivanus", ""], [0, 940, 40, "Maia Bolis, Claudia Canta", ""], [0, 980, 30, "Antonio Garritano", ""], [0, 1010, 30, "Arianna Mencancini", "aveva indicato solo venerdì 4, che non c'è più: da ricontattare"],
+    [1, 480, 30, "Lavinia Cleman", ""], [1, 510, 50, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni", ""], [1, 560, 30, "Denise Andracchio", ""], [1, 590, 50, "Diego Corridori, Edoardo Musti, Edoardo Liso", ""], [1, 640, 30, "Ylenia Fiori", ""], [1, 670, 40, "Sofia Verrengia, Sofia Pierosara", ""], [1, 710, 40, "Michele Grazioso, Simone Cardillo", ""], [1, 750, 30, "Sara Santoro", ""],
+    [1, 840, 30, "Antonio Agostino", "giovedì pomeriggio: fuori dalla fascia 8–13 (solo giovedì, fino alle 15)"], [1, 870, 30, "Carola Fabrizi", "giovedì pomeriggio: fuori dalla fascia 8–13 (solo giovedì pomeriggio)"], [1, 900, 30, "Angela Di Cesare", "giovedì pomeriggio: fuori dalla fascia 8–13 (solo giovedì)"], [1, 930, 30, "Sara Fasciano", "giovedì pomeriggio: fuori dalla fascia 8–13 (solo giovedì)"], [1, 960, 30, "Alice Gianni", "giovedì pomeriggio: fuori dalla fascia 8–13 (solo giovedì)"], [1, 990, 30, "Marta Georgescu", "giovedì pomeriggio: fuori dalla fascia 8–13 (solo giovedì)"]];
+  function importSet7(){
+    if(importing||!admin)return;
+    var p5=provaAll.filter(function(e){return e.pr==='5'});
+    if(p5.some(function(e){return e.imp==='set7'}))return;
+    importing=true;var used={},ops=[];
+    SET7.forEach(function(x,i){
+      var e=p5.filter(function(q){return !used[q.id]&&sameG(q.nm||(pOf(q)||{}).nome,x[3])})[0],r=byNm(x[3]);
+      var body={pr:'5',prn:'Proposta disponibilità fornite',imp:'set7',nm:x[3],chk:x[4]||undefined,day:x[0],start:x[1],dur:x[2],ts:Date.now()+i};
+      if(e){used[e.id]=1;body.pid=e.pid||(r?r.id:'');body.pub=e.pub||undefined;body.vis=e.vis||undefined;ops.push(['/gestione/prova/'+encodeURIComponent(e.id),'PUT',body])}
+      else{body.pid=r?r.id:'';ops.push(['/gestione/prova','POST',body])}
+    });
+    p5.forEach(function(e){if(!used[e.id])ops.push(['/gestione/prova/'+encodeURIComponent(e.id),'DELETE'])});
+    ops.reduce(function(pr,o){return pr.then(function(){return gdb(o[0],o[1],o[2])})},Promise.resolve())
+    .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
+    .then(function(){say('Ho rifatto la proposta su mercoledì e giovedì con le disponibilità aggiornate.')},function(){say('Non sono riuscito a rifare tutta la proposta. Avvisa Claude.')})
     .then(function(){importing=false});
   }
   /* --- togli le quattro proposte (mattina, pomeriggio, alternate): restano solo nel codice (SET2) per poterle rimettere --- */
