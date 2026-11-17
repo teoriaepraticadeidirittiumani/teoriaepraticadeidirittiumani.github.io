@@ -88,7 +88,7 @@ table.big td.n{font-size:.9rem}
 .tbtn{width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:12px 14px;border:1px solid var(--line);background:var(--card);border-radius:12px;cursor:pointer;font-size:.98rem;text-align:left}
 .tbtn small{color:var(--mute)}
 .prtabs{margin:10px 0;grid-template-columns:1fr 1fr}.prtabs .pt{display:block;text-transform:uppercase;font-weight:bold;letter-spacing:.03em;font-size:.72rem}.prtabs .ps{display:block;font-style:italic;font-size:.82rem;margin-top:1px}
-.note.ore{margin:2px 2px 12px;line-height:1.45}.note.ore .od{margin-bottom:6px}.note.ore .od span{color:var(--ink)}.prtabs{gap:6px}.prtabs button{white-space:normal;line-height:1.15;padding:5px 6px;min-height:0}.prtabs #prnew{border-style:dashed;font-size:.8rem;padding:6px}
+.note.ore{margin:2px 2px 12px;line-height:1.45}.note.ore .od{margin-bottom:6px}.note.ore .od span,.note.ore .orr span{color:var(--ink)}.note.ore{display:flex;gap:10px;align-items:flex-start}@media(max-width:520px){.note.ore{font-size:.8rem}}.note.ore .orl{flex:1;min-width:0}.note.ore .orr{flex:0 0 auto;padding-left:10px;border-left:1px solid var(--soft)}.prtabs{gap:6px}.prtabs button{white-space:normal;line-height:1.15;padding:5px 6px;min-height:0}.prtabs #prnew{border-style:dashed;font-size:.8rem;padding:6px}
 .addbox{margin-top:26px;padding-top:12px;border-top:1px solid var(--line);font-size:.85rem}
 .pday{font-weight:bold;margin:16px 4px 2px;padding-bottom:4px;border-bottom:1px solid var(--line)}
 .pday small{color:var(--mute);font-weight:normal}
@@ -732,10 +732,10 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       h+='<div class="od"><span>'+esc(D.full)+' · '+ev.length+' presentazioni</span><br>mattina '+(mat?hmin(mat):'—')+' · pomeriggio '+(pom?hmin(pom):'—')+' · totale '+hmin(mat+pom)+'</div>';
     });
     var du={1:{},2:{},3:{}};prova.forEach(function(e){var p=pOf(e),k=Math.min(3,Math.max(1,mems(p?p.nome:'').length));du[k][e.dur]=1});
-    var lab={1:'solo',2:'gruppo da 2',3:'gruppo da 3'},t=[];
+    var lab={1:'Singolo',2:'Gruppo da Due',3:'Gruppo da Tre'},t=[];
     [1,2,3].forEach(function(k){var v=Object.keys(du[k]).map(Number).sort(function(a,b){return a-b});if(v.length)t.push(lab[k]+' '+v.join('/')+' min')});
-    if(t.length)h+='<div class="od"><span>Tempo per presentazione</span><br>'+t.join(' · ')+'</div>';
-    return '<div class="note ore">'+h+'</div>';
+    var r=t.length?'<div class="orr"><span>Durata</span>'+t.map(function(x){return '<div>'+x+'</div>'}).join('')+'</div>':'';
+    return '<div class="note ore"><div class="orl">'+h+'</div>'+r+'</div>';
   }
   function provaHtml(){
     var todo=prova.filter(function(e){return !e.pub&&pOf(e)}).length;
