@@ -729,6 +729,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     .then(function(){importing=false});
   }
   function importDef(){
+    return; /* disattivato: le quattro proposte sono già state caricate; non va rifatto da solo (cancellerebbe anche la proposta 5) */
     if(importing||!admin)return;
     var olds=provaAll.filter(function(e){return /\(precedente\)$/.test(e.prn||'')});
     if(olds.length&&provaAll.some(function(e){return e.imp==='set2'})){importing=true;
