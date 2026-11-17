@@ -318,7 +318,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
-      importDef();importSet3();
+      importDef();importSet3();importSet4();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -646,12 +646,32 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   var SET3=[[0, 480, 30, "Aurora Tratzi", ""], [0, 510, 30, "Francesca Romana Lucarelli", ""], [0, 540, 30, "Alice Morelli", ""], [0, 570, 30, "Emanuela Clemente", ""], [1, 480, 30, "Lavinia Cleman", ""], [1, 510, 40, "Elisa Caldararo, Simone Leo", ""], [1, 550, 50, "Diego Corridori, Edoardo Musti, Edoardo Liso", ""], [1, 600, 30, "Beatrice Bindi", ""], [1, 630, 30, "Ylenia Fiori", ""], [1, 660, 30, "Marta Georgescu", ""], [1, 690, 30, "Carola Fabrizi", ""], [1, 720, 30, "Gemma Ceccacci", ""], [1, 750, 30, "Alexia-Bianca Repezis", ""], [2, 480, 50, "Attilio Perna, Francesco Kakpo, Stefano Monti", ""], [2, 530, 30, "Martina Benevento", ""], [2, 560, 30, "Arianna Mencancini", ""], [2, 590, 30, "Angela Di Cesare", ""], [2, 620, 30, "Antonio Agostino", ""], [2, 650, 50, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni", ""], [2, 700, 40, "Michele Grazioso, Simone Cardillo", ""], [2, 740, 40, "Maia Bolis, Claudia Canta", ""], [2, 900, 30, "Sara Santoro", ""], [2, 930, 40, "Sofia Verrengia, Sofia Pierosara", "mercoledì, solo primo pomeriggio"], [2, 970, 30, "Exauce Kisolokele", "solo mercoledì pomeriggio"], [2, 1000, 30, "Denisa Ivanus", "solo giovedì pomeriggio"], [2, 1030, 30, "Sara Fasciano", ""], [2, 1060, 30, "Denise Andracchio", ""], [2, 1090, 30, "Alice Gianni", ""], [2, 1120, 30, "Antonio Garritano", ""]];
   function importSet3(){
     if(importing||!admin)return;
-    if(!provaAll.some(function(e){return e.imp==='set2'})||provaAll.some(function(e){return e.imp==='set3'}))return;
+    if(!provaAll.some(function(e){return e.imp==='set2'})||provaAll.some(function(e){return e.imp==='set3'||e.imp==='set4'||e.pr==='5'}))return;
     importing=true;
     SET3.reduce(function(pr,x,i){return pr.then(function(){var r=byNm(x[3]);
       return gdb('/gestione/prova','POST',{pr:'5',prn:'Proposta disponibilità fornite',imp:'set3',pid:r?r.id:'',nm:x[3],chk:x[4]||undefined,day:x[0],start:x[1],dur:x[2],ts:Date.now()+i})})},Promise.resolve())
     .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
     .then(function(){say('Ho caricato la proposta con le disponibilità fornite.')},function(){say('Non sono riuscito a caricare la nuova proposta. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
+  /* --- modifica della proposta 5 (disponibilità fornite), applicata una volta (imp=set4) --- */
+  var SET4=[[0, 480, 30, "Aurora Tratzi", ""], [0, 510, 30, "Alice Morelli", ""], [0, 540, 30, "Emanuela Clemente", ""], [0, 840, 30, "Exauce Kisolokele", ""],
+    [1, 480, 30, "Lavinia Cleman", ""], [1, 510, 40, "Elisa Caldararo, Simone Leo", ""], [1, 550, 50, "Diego Corridori, Edoardo Musti, Edoardo Liso", ""], [1, 600, 30, "Beatrice Bindi", ""], [1, 630, 30, "Ylenia Fiori", ""], [1, 660, 30, "Carola Fabrizi", ""], [1, 690, 40, "Sofia Verrengia, Sofia Pierosara", ""], [1, 730, 40, "Michele Grazioso, Simone Cardillo", ""], [1, 770, 30, "Alexia-Bianca Repezis", ""],
+    [2, 480, 50, "Attilio Perna, Francesco Kakpo, Stefano Monti", ""], [2, 530, 30, "Martina Benevento", ""], [2, 560, 30, "Arianna Mencancini", ""], [2, 590, 30, "Angela Di Cesare", ""], [2, 620, 30, "Antonio Agostino", ""], [2, 650, 50, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni", ""], [2, 700, 40, "Maia Bolis, Claudia Canta", ""], [2, 740, 30, "Marta Georgescu", ""],
+    [2, 900, 30, "Sara Santoro", ""], [2, 930, 30, "Gemma Ceccacci", ""], [2, 960, 30, "Francesca Romana Lucarelli", ""], [2, 990, 30, "Denisa Ivanus", "solo giovedì pomeriggio · in attesa di altre disponibilità"], [2, 1020, 30, "Sara Fasciano", ""], [2, 1050, 30, "Denise Andracchio", ""], [2, 1080, 30, "Alice Gianni", ""], [2, 1110, 30, "Antonio Garritano", ""]];
+  function importSet4(){
+    if(importing||!admin)return;
+    var p5=provaAll.filter(function(e){return e.pr==='5'});
+    if(!p5.length||p5.some(function(e){return e.imp==='set4'}))return;
+    importing=true;var used={};
+    SET4.reduce(function(pr,x,i){return pr.then(function(){
+      var e=p5.filter(function(q){return !used[q.id]&&sameG(q.nm||(pOf(q)||{}).nome,x[3])})[0],r=byNm(x[3]);
+      var body={pr:'5',prn:'Proposta disponibilità fornite',imp:'set4',nm:x[3],chk:x[4]||undefined,day:x[0],start:x[1],dur:x[2],ts:Date.now()+i};
+      if(e){used[e.id]=1;body.pid=e.pid||(r?r.id:'');body.pub=e.pub||undefined;body.vis=e.vis||undefined;return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',body)}
+      body.pid=r?r.id:'';return gdb('/gestione/prova','POST',body);
+    })},Promise.resolve())
+    .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
+    .then(function(){say('Ho aggiornato la proposta con le disponibilità fornite.')},function(){say('Non sono riuscito ad aggiornare la proposta. Avvisa Claude.')})
     .then(function(){importing=false});
   }
   function importDef(){
@@ -681,7 +701,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     g.querySelectorAll('.ev').forEach(function(e){if(!e.clientHeight)return;var c=0;for(var k=0;k<e.children.length;k++)c+=e.children[k].offsetHeight;var cs=getComputedStyle(e);c+=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom)+4;need=Math.max(need,c/e.clientHeight)});
     if(!need)return;var t=Math.max(1,Math.min(2,rhBoost*need));if(Math.abs(t-rhBoost)>0.06){rhBoost=t;renderEl()}}
   var PRL={'1':['Proposta','mattina'],'2':['Proposta','pomeriggio'],'3':['Proposta alternata','mattina – pomeriggio'],'4':['Proposta alternata','pomeriggio – mattina'],'5':['Proposta','disponibilità fornite']};
-  function prLabel(id){var l=PRL[id];if(l&&provaAll.some(function(e){return e.pr===id&&(e.imp==='set2'||e.imp==='set3')}))return '<b class="pt">'+esc(l[0])+'</b><i class="ps">'+esc(l[1])+'</i>';return '<b class="pt">'+esc(prName(id))+'</b>'}
+  function prLabel(id){var l=PRL[id];if(l&&provaAll.some(function(e){return e.pr===id&&(e.imp==='set2'||e.imp==='set3'||e.imp==='set4')}))return '<b class="pt">'+esc(l[0])+'</b><i class="ps">'+esc(l[1])+'</i>';return '<b class="pt">'+esc(prName(id))+'</b>'}
   function prName(id){var e=provaAll.filter(function(q){return q.pr===id&&q.prn})[0];return e?e.prn:'Proposta '+id}
   var prInit=false;
   function setPr(){if(!prInit&&provaAll.some(function(e){return e.pr==='5'})){prInit=true;if(curPr==='1')curPr='5'}prova=provaAll.filter(function(e){return e.pr===curPr})}
