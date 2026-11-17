@@ -31,7 +31,8 @@ h1{font-size:1.3rem;font-weight:bold;line-height:1.3;margin:6px 4px 6px}
 .hd h1.brand::after{content:"";display:block;width:54px;height:2px;background:var(--acc);margin:7px auto 0;border-radius:2px;opacity:.55}
 .tag{font-size:15px;font-weight:bold;line-height:1.35;margin:6px 4px 6px;white-space:nowrap}
 .page[hidden]{display:none}
-.cal{display:grid;grid-template-columns:40px repeat(3,1fr);border-top:1px solid var(--line)}
+.cal{display:grid;grid-template-columns:40px repeat(2,1fr);border-top:1px solid var(--line)}
+.seclb{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin:18px 4px 6px}
 .head{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:3;text-align:center;padding:8px 0 6px;border-bottom:1px solid var(--line)}
 .head .w{font-size:.72rem;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
 .head .n{font-size:1.5rem;line-height:1.1}
@@ -377,12 +378,13 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
 
   function buildGrid(cfg){
     var TO=cfg.to||window.__TO,FROM=cfg.from||8*60,R=cfg.rh,g=document.createElement('div');g.className='cal'+(cfg.small?' small':'')+(cfg.pv?' pvg':'')+(cfg.ro?' ro':'');
+    var DD=cfg.days||[0,1];g.style.gridTemplateColumns='40px repeat('+DD.length+',1fr)';
     g.appendChild(Object.assign(document.createElement('div'),{className:'head'}));
-    DAYS.forEach(function(D){var h=document.createElement('div');h.className='head';h.innerHTML='<div class="w">'+D.w+'</div><div class="n">'+D.n+'</div><div class="m">dic</div>';g.appendChild(h)});
+    DD.forEach(function(d){var D=DAYS[d],h=document.createElement('div');h.className='head';h.innerHTML='<div class="w">'+D.w+'</div><div class="n">'+D.n+'</div><div class="m">dic</div>';g.appendChild(h)});
     var ax=document.createElement('div');ax.className='axis';
     for(var m=FROM;m<TO;m+=STEP){var r=document.createElement('div');r.style.height=R+'px';if(m%60===0)r.innerHTML='<span>'+(m/60)+':00</span>';ax.appendChild(r)}
     g.appendChild(ax);
-    DAYS.forEach(function(_,d){
+    DD.forEach(function(d){
       var col=document.createElement('div');col.className='col';
       for(var m=FROM;m<TO;m+=STEP){(function(m){
         var b=document.createElement('button');b.className='cell'+(m%60===0?' h':'');b.style.height=R+'px';
@@ -415,6 +417,21 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       g.appendChild(col);
     });
     return g;
+  }
+  /* calendario diviso: Mattina (mer e gio) e Pomeriggio (solo mer; gio compare solo se c'è qualcuno) */
+  function buildSplit(cfg){
+    var w=document.createElement('div'),from=cfg.from||8*60,to=Math.max(cfg.to||window.__TO,19*60),M1=13*60,M2=14*60;
+    var all=[0,1].map(function(d){return cfg.items(d).filter(function(x){return !x.full})});
+    if(all.some(function(l){return l.some(function(x){return x.start>=M1&&x.start<M2})}))M1=M2;
+    var lb=function(t){var e=document.createElement('div');e.className='seclb';e.textContent=t;return e};
+    w.appendChild(lb('Mattina'));
+    w.appendChild(buildGrid(Object.assign({},cfg,{from:from,to:M1,days:[0,1]})));
+    if(M1<to){
+      var pd=[0];if(all[1].some(function(x){return x.start>=M1}))pd.push(1);
+      w.appendChild(lb('Pomeriggio'));
+      w.appendChild(buildGrid(Object.assign({},cfg,{from:M2,to:to,days:pd})));
+    }
+    return w;
   }
   /* scheda informativa di una persona nel calendario (matricola solo con la password) */
   function infoSheet(i){
@@ -489,7 +506,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   }
   function render(){
     var cal=$('cal');cal.innerHTML='';
-    cal.appendChild(buildGrid({rh:RH,small:false,
+    cal.appendChild(buildSplit({rh:RH,small:false,
       items:function(d){var o=chiusure.filter(function(c){return c.day===d}).map(function(c){return {start:c.start,dur:c.end-c.start,full:true,cls:'blk tap',info:{blk:true,day:c.day,start:c.start,dur:c.end-c.start},html:'Slot non disponibile'}});
         o=o.concat(bookings.filter(function(b){return b.day===d}).map(function(b){return {start:b.start,dur:b.dur,cls:'tap',info:{name:b.name,topic:b.topic,day:b.day,start:b.start,dur:b.dur,matr:matricole[b.id]||''},html:'<b>'+esc(b.name)+'</b>'+(b.topic?' · '+esc(b.topic):'')}}));
         if(admin)assegnati.forEach(function(a){if(a.day===d)o.push({start:a.start,dur:a.dur,cls:'imp tap',info:{name:a.name,topic:a.topic,day:a.day,start:a.start,dur:a.dur,matr:a.matricola||'',asg:true},html:'<b>'+esc(a.name)+'</b>'+(a.topic?' · '+esc(a.topic):'')})});
@@ -1088,7 +1105,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if($('pcsv'))$('pcsv').onclick=function(){csvDownload('elenco.csv',[['#','Nome','Matricola','Argomento','Giornata','Gruppo','Altro']].concat(persone.map(function(p,i){return [i+1,p.nome,p.matricola,p.argomento,giorniTxt(p.giorni),p.tipo==='g2'?'da 2':p.tipo==='g3'?'da 3':'solo',p.note||'']})))};
     if($('bcsv'))$('bcsv').onclick=function(){csvDownload('prenotazioni.csv',[['Giorno','Dalle','Alle','Durata (min)','Nome','Matricola','Argomento']].concat(list.map(function(p){return [DAYS[p.day].full,hm(p.start),hm(p.start+p.dur),p.dur,p.name,p.matr||'',p.topic]})))};
     if(provaOpen){
-      $('pgrid').appendChild(buildGrid({rh:pRH(),small:true,pv:true,from:pRange()[0],to:pRange()[1],
+      $('pgrid').appendChild(buildSplit({rh:pRH(),small:true,pv:true,from:Math.min(8*60,pRange()[0]),to:pRange()[1],
         items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':'')+(e.chk?' chk':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?'<span class="tm">'+esc(p.argomento)+'</span>':'')}})},
         cell:function(d,m){pst={mode:'place',d:d,m:m,dur:10};if(m+10>TO)return;psheet()},
         evclick:function(x){var e=prova.filter(function(q){return q.id===x.id})[0];if(!e)return;pst={mode:'edit',id:e.id,day:e.day,start:e.start,dur:e.dur};psheet()}}));
