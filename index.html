@@ -50,6 +50,7 @@ h1{font-size:1.3rem;font-weight:bold;line-height:1.3;margin:6px 4px 6px}
 .note{color:var(--mute);font-size:.85rem;padding:6px 0}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:30}
 .sheet[hidden]{display:none}
+#psheet.center{align-items:center;padding:16px}#psheet.center .panel{border-radius:16px;max-width:400px;max-height:calc(100% - 32px);padding:16px}
 .panel{background:var(--bg);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:88%;overflow-y:auto}
 .panel h2{font-size:1.15rem;font-weight:normal;margin:0}
 .panel .when{color:var(--mute);font-size:.88rem;margin-bottom:10px}
@@ -412,6 +413,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       '<div class="when">'+esc(DAYS[i.day].full)+' · '+hm(i.start)+'–'+hm(i.start+i.dur)+(i.asg?' · <small>in azzurro, visibile solo con la password</small>':'')+'</div>'+
       '<div class="info">'+(admin?'<div><small>Matricola</small><br><b>'+esc(i.matr||'—')+'</b></div>':'')+
       '<div><small>Tema</small><br><i>'+esc(i.topic||'non ancora indicato')+'</i></div></div>';
+    $('psheet').classList.add('center');
     $('ppanel').innerHTML=h;$('psheet').hidden=false;
     $('pcl').onclick=function(){$('psheet').hidden=true};
   }
@@ -898,6 +900,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
          (others.length?'<select id="eafter"><option value="">Metti subito dopo…</option>'+others.map(function(x){var q=pOf(x);return '<option value="'+(x.start+x.dur)+'">'+hm(x.start)+'–'+hm(x.start+x.dur)+' · '+esc(q?q.nome:'(rimosso)')+'</option>'}).join('')+'</select>':'')+
          '<button class="p" id="esave">Salva</button><button class="lnk" id="edel">Togli dalla proposta</button></div>';
     }
+    $('psheet').classList.toggle('center',pst.mode==='edit');
     $('ppanel').innerHTML=h;$('psheet').hidden=false;
     $('pcl').onclick=function(){pst=null;psheet()};
     $('ppanel').querySelectorAll('[data-pdur]').forEach(function(b){b.onclick=function(){if(!b.disabled){pst.dur=+b.getAttribute('data-pdur');psheet()}}});
