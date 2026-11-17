@@ -113,7 +113,7 @@ table.big td.n{font-size:.9rem}
 .cal.pvg .ev .tm{display:block;margin-top:3px;font-style:normal;font-size:.76rem;line-height:1.2;color:var(--ink)}
 .cal.pvg .head .n{font-size:1.3rem}.cal.pvg .head .w,.cal.pvg .head .m{font-size:.72rem}
 .cal.pvg .axis span{font-size:.72rem}
-.cal.pvg .axis,.cal.pvg .col{margin-top:12px}
+.cal .axis,.cal .col{margin-top:12px}
 #pgrid{width:100vw;margin-left:calc(50% - 50vw);padding:0 6px;box-sizing:border-box}
 @media(min-width:760px){.cal.pvg .ev{font-size:.95rem;padding:6px 9px}.cal.pvg .ev b{font-size:.9rem}.cal.pvg .ev .tm{font-size:.95rem}#pgrid{padding:0 20px}}
 .cal.pvg .axis span{font-size:.68rem}
@@ -181,7 +181,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   var API_KEY='AIzaSyALquPqUan9betC6A3dcS8GjTGh3mGbTXY';
   var GESTIONE_EMAIL='gestione@example.com';
   var DAYS=[{w:'mer',n:2,full:'Mercoledì 2 dicembre'},{w:'gio',n:3,full:'Giovedì 3 dicembre'},{w:'ven',n:4,full:'Venerdì 4 dicembre'}];
-  var FROM=9*60,TO=19*60;window.__TO=TO;var STEP=10,RH=26,POLL=6000;
+  var FROM=8*60,TO=19*60;window.__TO=TO;var STEP=10,RH=26,POLL=6000;
   /* ======================== */
   /* ===== MODALITÀ ANTEPRIMA =====
      Fuori da netlify.app e github.io (per esempio dentro Claude) il sito non può collegarsi al database:
@@ -360,7 +360,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function overlapsBlock(d,a,z){return chiusure.some(function(c){return c.day===d&&a<c.end&&z>c.start})}
 
   function buildGrid(cfg){
-    var TO=cfg.to||window.__TO,FROM=cfg.from||9*60,R=cfg.rh,g=document.createElement('div');g.className='cal'+(cfg.small?' small':'')+(cfg.pv?' pvg':'')+(cfg.ro?' ro':'');
+    var TO=cfg.to||window.__TO,FROM=cfg.from||8*60,R=cfg.rh,g=document.createElement('div');g.className='cal'+(cfg.small?' small':'')+(cfg.pv?' pvg':'')+(cfg.ro?' ro':'');
     g.appendChild(Object.assign(document.createElement('div'),{className:'head'}));
     DAYS.forEach(function(D){var h=document.createElement('div');h.className='head';h.innerHTML='<div class="w">'+D.w+'</div><div class="n">'+D.n+'</div><div class="m">dic</div>';g.appendChild(h)});
     var ax=document.createElement('div');ax.className='axis';
@@ -430,7 +430,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         if(!t1||!t2){say('Scrivi gli orari così: 15.00');return}
         var st=(+t1[1])*60+(+t1[2]),en=(+t2[1])*60+(+t2[2]);
         if(en<=st){say('L’ora finale deve essere dopo quella iniziale.');return}
-        if(st<FROM||en>TO){say('Gli orari devono stare tra le 9:00 e le 19:00.');return}
+        if(st<FROM||en>TO){say('Gli orari devono stare tra le 8:00 e le 19:00.');return}
         $('chadd').disabled=true;
         gdb('/chiusure','POST',{day:chDay,start:st,end:en,ts:Date.now()}).then(function(){$('ca').value='';$('cb').value='';sig='';return load()}).catch(function(){say('Non sono riuscito a salvare. Controlla che le regole di Firebase siano aggiornate.')}).then(function(){if($('chadd'))$('chadd').disabled=false});
       };
@@ -789,7 +789,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var m=$('eo').value.trim().match(/^(\d{1,2})[:.](\d{2})$/);
       if(!m){say('Scrivi l’ora così: 10.30');return}
       var st=(+m[1])*60+(+m[2]);
-      if(st<FROM||st+pst.dur>TO){say('L’orario deve stare tra le 9:00 e le 19:00.');return}
+      if(st<FROM||st+pst.dur>TO){say('L’orario deve stare tra le 8:00 e le 19:00.');return}
       var e=prova.filter(function(x){return x.id===pst.id})[0];
       gdb('/gestione/prova/'+encodeURIComponent(pst.id),'PUT',{pr:e.pr,prn:e.prn||undefined,chk:e.chk||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:pst.day,start:st,dur:pst.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a salvare.')});
     };
