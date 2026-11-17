@@ -105,6 +105,8 @@ table.big td.n{font-size:.9rem}
 .cal.small .axis span{font-size:.6rem}
 .cal.small .ev{font-size:.6rem;padding:0 3px;border-radius:4px}
 .ev.pv{pointer-events:auto;cursor:pointer}
+.cal .ev.pv.chk{background:#f3dde1;border-left-color:#7b1e2e;color:#5a1020}.cal .ev.pv.chk b{color:#7b1e2e}
+.dac{margin:14px 2px 4px}.dac .dr{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--soft);color:var(--mute);font-size:.9rem}.dac .dr div{flex:1}.dac .dr small{display:block;font-size:.8rem}.dac .dr button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;font:inherit;font-size:.82rem;color:var(--ink);cursor:pointer}
 .cal.pvg .ev{font-size:.8rem;line-height:1.18;padding:3px 5px;font-family:Georgia,"Times New Roman",serif}
 .cal.pvg .ev.one{white-space:normal}
 .cal.pvg .ev b{display:block;text-transform:uppercase;font-weight:bold;letter-spacing:.02em;font-size:.74rem}
@@ -306,14 +308,14 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         });
       }
       list.sort(function(a,b){return a.ts-b.ts});
-      Object.keys(pr).forEach(function(k){var x=pr[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')pv.push({id:k,pr:String(x.pr||'1'),prn:x.prn||'',nm:x.nm||'',imp:x.imp||'',pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,pub:x.pub||'',vis:!!x.vis})});
+      Object.keys(pr).forEach(function(k){var x=pr[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')pv.push({id:k,pr:String(x.pr||'1'),prn:x.prn||'',chk:x.chk||'',nm:x.nm||'',imp:x.imp||'',pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,pub:x.pub||'',vis:!!x.vis})});
       Object.keys(ag).forEach(function(k){var x=ag[k]||{};if(typeof x.day==='number'&&typeof x.start==='number')asg.push({id:k,pid:x.pid||'',day:x.day,start:x.start,dur:x.dur||10,name:x.name||'',topic:x.topic||'',matricola:x.matricola||''})});
       pv.forEach(function(e){if(e.pub&&!e.vis&&!ag[e.pub])e.pub='';if(remap[e.pid])e.pid=remap[e.pid]});
       asg.forEach(function(a){var pid=remap[a.pid]||a.pid,p=list.filter(function(q){return q.id===pid})[0];if(p&&p.argomento)a.topic=p.argomento});
       var mm={};Object.keys(m).forEach(function(k){mm[k]=(m[k]&&m[k].matricola)||''});
       var s=JSON.stringify([list,mm,pv,asg]);
       if(s!==asig){asig=s;persone=list;matricole=mm;provaAll=pv;setPr();assegnati=asg;if(page==='el')renderEl();render();sheet()}
-      importDef();
+      importDef();importSet3();
     }).catch(function(){logout(true)});
   }
   function openLogin(){$('pw').value='';$('lerr').textContent='';$('login').hidden=false;setTimeout(function(){$('pw').focus()},50)}
@@ -516,7 +518,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
         .then(function(j){
           return (a.matricola?gdb('/matricole/'+encodeURIComponent(j.name),'PUT',{matricola:a.matricola}):Promise.resolve())
             .then(function(){
-              return provaAll.filter(function(e){return e.pub===a.id}).reduce(function(p2,e){return p2.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,prn:e.prn||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name,vis:true})})},Promise.resolve());
+              return provaAll.filter(function(e){return e.pub===a.id}).reduce(function(p2,e){return p2.then(function(){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,prn:e.prn||undefined,chk:e.chk||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name,vis:true})})},Promise.resolve());
             })
             .then(function(){return gdb('/gestione/assegnati/'+encodeURIComponent(a.id),'DELETE')})
             .then(function(){n++});
@@ -638,6 +640,17 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   var bookOpen=false;
   /* --- quattro proposte dal documento: inserite una volta (imp=set2) --- */
   var SET2=[["1", 0, 540, 20, "Aurora Tratzi"], ["1", 0, 560, 20, "Francesca Romana Lucarelli"], ["1", 0, 580, 20, "Alice Morelli"], ["1", 0, 600, 20, "Emanuela Clemente"], ["1", 0, 620, 20, "Gemma Ceccacci"], ["1", 0, 640, 20, "Alexia-Bianca Repezis"], ["1", 0, 660, 20, "Antonio Garritano"], ["1", 0, 680, 30, "Maia Bolis, Claudia Canta"], ["1", 0, 840, 30, "Sofia Verrengia, Sofia Pierosara"], ["1", 0, 870, 20, "Exauce Kisolokele"], ["1", 1, 540, 20, "Lavinia Cleman"], ["1", 1, 560, 30, "Elisa Caldararo, Simone Leo"], ["1", 1, 590, 40, "Diego Corridori, Edoardo Musti, Edoardo Liso"], ["1", 1, 630, 30, "Michele Grazioso, Simone Cardillo"], ["1", 1, 660, 20, "Beatrice Bindi"], ["1", 1, 680, 20, "Ylenia Fiori"], ["1", 1, 700, 20, "Marta Georgescu"], ["1", 1, 720, 20, "Carola Fabrizi"], ["1", 1, 840, 20, "Denisa Ivanus"], ["1", 2, 540, 40, "Attilio Perna, Francesco Kakpo, Stefano Monti"], ["1", 2, 580, 20, "Martina Benevento"], ["1", 2, 600, 20, "Arianna Mencancini"], ["1", 2, 620, 20, "Angela Di Cesare"], ["1", 2, 640, 20, "Antonio Agostino"], ["1", 2, 660, 40, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni"], ["1", 2, 700, 20, "Sara Fasciano"], ["1", 2, 720, 20, "Denise Andracchio"], ["1", 2, 740, 20, "Alice Gianni"], ["1", 2, 840, 20, "Sara Santoro"], ["2", 0, 600, 20, "Aurora Tratzi"], ["2", 0, 620, 20, "Francesca Romana Lucarelli"], ["2", 0, 640, 20, "Alice Morelli"], ["2", 0, 840, 30, "Sofia Verrengia, Sofia Pierosara"], ["2", 0, 870, 20, "Exauce Kisolokele"], ["2", 0, 890, 20, "Emanuela Clemente"], ["2", 0, 910, 20, "Gemma Ceccacci"], ["2", 0, 930, 20, "Alexia-Bianca Repezis"], ["2", 0, 950, 20, "Antonio Garritano"], ["2", 0, 970, 30, "Maia Bolis, Claudia Canta"], ["2", 1, 660, 20, "Lavinia Cleman"], ["2", 1, 840, 20, "Denisa Ivanus"], ["2", 1, 860, 30, "Elisa Caldararo, Simone Leo"], ["2", 1, 890, 40, "Diego Corridori, Edoardo Musti, Edoardo Liso"], ["2", 1, 930, 30, "Michele Grazioso, Simone Cardillo"], ["2", 1, 960, 20, "Beatrice Bindi"], ["2", 1, 980, 20, "Ylenia Fiori"], ["2", 1, 1000, 20, "Marta Georgescu"], ["2", 1, 1020, 20, "Carola Fabrizi"], ["2", 2, 660, 40, "Attilio Perna, Francesco Kakpo, Stefano Monti"], ["2", 2, 840, 20, "Antonio Agostino"], ["2", 2, 860, 20, "Sara Santoro"], ["2", 2, 880, 20, "Martina Benevento"], ["2", 2, 900, 20, "Arianna Mencancini"], ["2", 2, 920, 20, "Angela Di Cesare"], ["2", 2, 940, 40, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni"], ["2", 2, 980, 20, "Sara Fasciano"], ["2", 2, 1000, 20, "Denise Andracchio"], ["2", 2, 1020, 20, "Alice Gianni"], ["3", 0, 540, 20, "Aurora Tratzi"], ["3", 0, 560, 20, "Francesca Romana Lucarelli"], ["3", 0, 580, 20, "Alice Morelli"], ["3", 0, 600, 20, "Emanuela Clemente"], ["3", 0, 620, 20, "Gemma Ceccacci"], ["3", 0, 640, 20, "Alexia-Bianca Repezis"], ["3", 0, 660, 20, "Antonio Garritano"], ["3", 0, 680, 30, "Maia Bolis, Claudia Canta"], ["3", 0, 840, 30, "Sofia Verrengia, Sofia Pierosara"], ["3", 0, 870, 20, "Exauce Kisolokele"], ["3", 1, 660, 20, "Lavinia Cleman"], ["3", 1, 840, 20, "Denisa Ivanus"], ["3", 1, 860, 30, "Elisa Caldararo, Simone Leo"], ["3", 1, 890, 40, "Diego Corridori, Edoardo Musti, Edoardo Liso"], ["3", 1, 930, 30, "Michele Grazioso, Simone Cardillo"], ["3", 1, 960, 20, "Beatrice Bindi"], ["3", 1, 980, 20, "Ylenia Fiori"], ["3", 1, 1000, 20, "Marta Georgescu"], ["3", 1, 1020, 20, "Carola Fabrizi"], ["3", 2, 540, 40, "Attilio Perna, Francesco Kakpo, Stefano Monti"], ["3", 2, 580, 20, "Martina Benevento"], ["3", 2, 600, 20, "Arianna Mencancini"], ["3", 2, 620, 20, "Angela Di Cesare"], ["3", 2, 640, 20, "Antonio Agostino"], ["3", 2, 660, 40, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni"], ["3", 2, 700, 20, "Sara Fasciano"], ["3", 2, 720, 20, "Denise Andracchio"], ["3", 2, 740, 20, "Alice Gianni"], ["3", 2, 840, 20, "Sara Santoro"], ["4", 0, 600, 20, "Aurora Tratzi"], ["4", 0, 620, 20, "Francesca Romana Lucarelli"], ["4", 0, 640, 20, "Alice Morelli"], ["4", 0, 840, 30, "Sofia Verrengia, Sofia Pierosara"], ["4", 0, 870, 20, "Exauce Kisolokele"], ["4", 0, 890, 20, "Emanuela Clemente"], ["4", 0, 910, 20, "Gemma Ceccacci"], ["4", 0, 930, 20, "Alexia-Bianca Repezis"], ["4", 0, 950, 20, "Antonio Garritano"], ["4", 0, 970, 30, "Maia Bolis, Claudia Canta"], ["4", 1, 540, 20, "Lavinia Cleman"], ["4", 1, 560, 30, "Elisa Caldararo, Simone Leo"], ["4", 1, 590, 40, "Diego Corridori, Edoardo Musti, Edoardo Liso"], ["4", 1, 630, 30, "Michele Grazioso, Simone Cardillo"], ["4", 1, 660, 20, "Beatrice Bindi"], ["4", 1, 680, 20, "Ylenia Fiori"], ["4", 1, 700, 20, "Marta Georgescu"], ["4", 1, 720, 20, "Carola Fabrizi"], ["4", 1, 840, 20, "Denisa Ivanus"], ["4", 2, 660, 40, "Attilio Perna, Francesco Kakpo, Stefano Monti"], ["4", 2, 840, 20, "Antonio Agostino"], ["4", 2, 860, 20, "Sara Santoro"], ["4", 2, 880, 20, "Martina Benevento"], ["4", 2, 900, 20, "Arianna Mencancini"], ["4", 2, 920, 20, "Angela Di Cesare"], ["4", 2, 940, 40, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni"], ["4", 2, 980, 20, "Sara Fasciano"], ["4", 2, 1000, 20, "Denise Andracchio"], ["4", 2, 1020, 20, "Alice Gianni"]],SET2N={"1": "Proposta tutti mattina", "2": "Proposta pomeriggio", "3": "Proposta alternata mattina pomeriggio", "4": "Proposta alternata pomeriggio mattina"},importing=false;
+  var SET3=[[0, 480, 30, "Aurora Tratzi", ""], [0, 510, 30, "Francesca Romana Lucarelli", ""], [0, 540, 30, "Alice Morelli", ""], [0, 570, 30, "Emanuela Clemente", ""], [1, 480, 30, "Lavinia Cleman", ""], [1, 510, 40, "Elisa Caldararo, Simone Leo", ""], [1, 550, 50, "Diego Corridori, Edoardo Musti, Edoardo Liso", ""], [1, 600, 30, "Beatrice Bindi", ""], [1, 630, 30, "Ylenia Fiori", ""], [1, 660, 30, "Marta Georgescu", ""], [1, 690, 30, "Carola Fabrizi", ""], [1, 720, 30, "Gemma Ceccacci", ""], [1, 750, 30, "Alexia-Bianca Repezis", ""], [2, 480, 50, "Attilio Perna, Francesco Kakpo, Stefano Monti", ""], [2, 530, 30, "Martina Benevento", ""], [2, 560, 30, "Arianna Mencancini", ""], [2, 590, 30, "Angela Di Cesare", ""], [2, 620, 30, "Antonio Agostino", ""], [2, 650, 50, "Giorgia Giachini, Ginevra Sion Palombini, Claudia Moroni", ""], [2, 700, 40, "Michele Grazioso, Simone Cardillo", ""], [2, 740, 40, "Maia Bolis, Claudia Canta", ""], [2, 900, 30, "Sara Santoro", ""], [2, 930, 40, "Sofia Verrengia, Sofia Pierosara", "mercoledì, solo primo pomeriggio"], [2, 970, 30, "Exauce Kisolokele", "solo mercoledì pomeriggio"], [2, 1000, 30, "Denisa Ivanus", "solo giovedì pomeriggio"], [2, 1030, 30, "Sara Fasciano", ""], [2, 1060, 30, "Denise Andracchio", ""], [2, 1090, 30, "Alice Gianni", ""], [2, 1120, 30, "Antonio Garritano", ""]];
+  function importSet3(){
+    if(importing||!admin)return;
+    if(!provaAll.some(function(e){return e.imp==='set2'})||provaAll.some(function(e){return e.imp==='set3'}))return;
+    importing=true;
+    SET3.reduce(function(pr,x,i){return pr.then(function(){var r=byNm(x[3]);
+      return gdb('/gestione/prova','POST',{pr:'5',prn:'Proposta disponibilità fornite',imp:'set3',pid:r?r.id:'',nm:x[3],chk:x[4]||undefined,day:x[0],start:x[1],dur:x[2],ts:Date.now()+i})})},Promise.resolve())
+    .then(function(){curPr='5';provaOpen=true;asig='';return loadAdmin()})
+    .then(function(){say('Ho caricato la proposta con le disponibilità fornite.')},function(){say('Non sono riuscito a caricare la nuova proposta. Avvisa Claude.')})
+    .then(function(){importing=false});
+  }
   function importDef(){
     if(importing||!admin)return;
     var olds=provaAll.filter(function(e){return /\(precedente\)$/.test(e.prn||'')});
@@ -660,11 +673,11 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   /* --- calendario prova (bozza privata) --- */
   var rhBoost=1;
   function pRH(){return Math.round((innerWidth>=760?26:36)*rhBoost)}
-  function pRange(){var a=9*60,b=13*60;prova.forEach(function(e){b=Math.max(b,e.start+e.dur)});return [a,Math.min(19*60,Math.ceil(b/60)*60)]}
+  function pRange(){var a=9*60,b=13*60;prova.forEach(function(e){a=Math.min(a,e.start);b=Math.max(b,e.start+e.dur)});return [Math.max(7*60,Math.floor(a/60)*60),Math.min(21*60,Math.ceil(b/60)*60)]}
   function fitGrid(){var g=$('pgrid');if(!g)return;var need=1;g.querySelectorAll('.ev').forEach(function(e){if(e.clientHeight>0)need=Math.max(need,(e.scrollHeight+2)/e.clientHeight)});
     if(need>1.02&&rhBoost<2.2){rhBoost=Math.min(2.2,rhBoost*need);renderEl()}}
-  var PRL={'1':['Proposta','mattina'],'2':['Proposta','pomeriggio'],'3':['Proposta alternata','mattina – pomeriggio'],'4':['Proposta alternata','pomeriggio – mattina']};
-  function prLabel(id){var l=PRL[id];if(l&&provaAll.some(function(e){return e.pr===id&&e.imp==='set2'}))return '<b class="pt">'+esc(l[0])+'</b><i class="ps">'+esc(l[1])+'</i>';return '<b class="pt">'+esc(prName(id))+'</b>'}
+  var PRL={'1':['Proposta','mattina'],'2':['Proposta','pomeriggio'],'3':['Proposta alternata','mattina – pomeriggio'],'4':['Proposta alternata','pomeriggio – mattina'],'5':['Proposta','disponibilità fornite']};
+  function prLabel(id){var l=PRL[id];if(l&&provaAll.some(function(e){return e.pr===id&&(e.imp==='set2'||e.imp==='set3')}))return '<b class="pt">'+esc(l[0])+'</b><i class="ps">'+esc(l[1])+'</i>';return '<b class="pt">'+esc(prName(id))+'</b>'}
   function prName(id){var e=provaAll.filter(function(q){return q.pr===id&&q.prn})[0];return e?e.prn:'Proposta '+id}
   function setPr(){prova=provaAll.filter(function(e){return e.pr===curPr})}
   function prList(){var o={'1':1};o[curPr]=1;provaAll.forEach(function(e){o[e.pr]=1});extraPr.forEach(function(x){o[x]=1});return Object.keys(o).sort(function(a,b){return a-b})}
@@ -704,6 +717,10 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     var g=[];if(n[1])g.push(n[1]+' sol'+(n[1]===1?'o':'i'));if(n[2])g.push(n[2]+' grupp'+(n[2]===1?'o':'i')+' da 2');if(n[3])g.push(n[3]+' grupp'+(n[3]===1?'o':'i')+' da 3');
     return '<div class="note" style="margin-top:2px">'+Object.keys(stud).length+' studenti · '+prova.length+' presentazioni ('+g.join(', ')+')</div>';
   }
+  function daConf(){
+    var l=prova.filter(function(e){return e.chk});if(!l.length)return '';
+    return '<div class="dac">'+l.map(function(e){var p=pOf(e);return '<div class="dr"><div>'+esc(p?p.nome:e.nm)+'<small>disponibilità originaria: '+esc(e.chk)+'</small></div><button data-okchk="'+esc(e.id)+'">Va bene</button></div>'}).join('')+'</div>';
+  }
   function oreLines(){
     if(!prova.length)return '';
     var h='';
@@ -718,7 +735,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   function provaHtml(){
     var todo=prova.filter(function(e){return !e.pub&&pOf(e)}).length;
     var h='<div class="tg prtabs">'+prList().map(function(x){return '<button data-pr="'+x+'" class="'+(x===curPr?'on':'')+'">'+prLabel(x)+'</button>'}).join('')+'<button id="prnew">+ Nuova</button></div>'+
-      oreLines()+'<div id="pgrid"></div>';
+      oreLines()+'<div id="pgrid"></div>'+daConf();
     var un=persone.filter(function(p){return !isPlaced(p)});
     if(un.length){
       h+='<div class="pday">Non ancora inseriti <small>('+un.length+')</small></div>';
@@ -769,7 +786,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       var st=(+m[1])*60+(+m[2]);
       if(st<FROM||st+pst.dur>TO){say('L’orario deve stare tra le 9:00 e le 19:00.');return}
       var e=prova.filter(function(x){return x.id===pst.id})[0];
-      gdb('/gestione/prova/'+encodeURIComponent(pst.id),'PUT',{pr:e.pr,prn:e.prn||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:pst.day,start:st,dur:pst.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a salvare.')});
+      gdb('/gestione/prova/'+encodeURIComponent(pst.id),'PUT',{pr:e.pr,prn:e.prn||undefined,chk:e.chk||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:pst.day,start:st,dur:pst.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined}).then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a salvare.')});
     };
     if($('edel'))$('edel').onclick=function(){gdb('/gestione/prova/'+encodeURIComponent(pst.id),'DELETE').then(function(){pst=null;asig='';return loadAdmin()}).then(function(){psheet()}).catch(function(){say('Non sono riuscito a rimuovere.')})};
   }
@@ -785,7 +802,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     todo.reduce(function(pr,e){return pr.then(function(){
       var p=pOf(e);
       return gdb('/gestione/assegnati','POST',{pid:e.pid,day:e.day,start:e.start,dur:e.dur,name:p.nome,topic:p.argomento||'',matricola:p.matricola||'',ts:Date.now()+n})
-        .then(function(j){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,prn:e.prn||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name})})
+        .then(function(j){return gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,prn:e.prn||undefined,chk:e.chk||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:j.name})})
         .then(function(){n++});
     })},Promise.resolve()).then(function(){say('Caricate '+n+' persone nel calendario normale, visibili solo con la password.')},function(){say('Caricate '+n+' persone, poi si è interrotto. Controlla il calendario prima di riprovare.')})
       .then(function(){busy=false;asig='';return loadAdmin()});
@@ -856,10 +873,13 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     if($('bcsv'))$('bcsv').onclick=function(){csvDownload('prenotazioni.csv',[['Giorno','Dalle','Alle','Durata (min)','Nome','Matricola','Argomento']].concat(list.map(function(p){return [DAYS[p.day].full,hm(p.start),hm(p.start+p.dur),p.dur,p.name,p.matr||'',p.topic]})))};
     if(provaOpen){
       $('pgrid').appendChild(buildGrid({rh:pRH(),small:true,pv:true,from:pRange()[0],to:pRange()[1],
-        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?'<span class="tm">'+esc(p.argomento)+'</span>':'')}})},
+        items:function(d){return prova.filter(function(e){return e.day===d}).map(function(e){var p=pOf(e);return {id:e.id,start:e.start,dur:e.dur,cls:'pv'+(e.pub?' done':'')+(e.chk?' chk':''),html:(e.pub?'✓ ':'')+'<b>'+esc(p?p.nome:'(rimosso)')+'</b>'+(p&&p.argomento?'<span class="tm">'+esc(p.argomento)+'</span>':'')}})},
         cell:function(d,m){pst={mode:'place',d:d,m:m,dur:10};if(m+10>TO)return;psheet()},
         evclick:function(x){var e=prova.filter(function(q){return q.id===x.id})[0];if(!e)return;pst={mode:'edit',id:e.id,day:e.day,start:e.start,dur:e.dur};psheet()}}));
       setTimeout(fitGrid,0);
+      a.querySelectorAll('[data-okchk]').forEach(function(b){b.onclick=function(){var e=prova.filter(function(x){return x.id===b.getAttribute('data-okchk')})[0];if(!e)return;b.disabled=true;
+        gdb('/gestione/prova/'+encodeURIComponent(e.id),'PUT',{pr:e.pr,prn:e.prn||undefined,nm:e.nm||undefined,imp:e.imp||undefined,pid:e.pid,day:e.day,start:e.start,dur:e.dur,ts:Date.now(),pub:e.pub||undefined,vis:e.vis||undefined})
+        .then(function(){e.chk='';asig='';return loadAdmin()}).then(function(){renderEl()}).catch(function(){b.disabled=false;say('Non sono riuscito a salvare.')})}});
       a.querySelectorAll('[data-pr]').forEach(function(b){b.onclick=function(){curPr=b.getAttribute('data-pr');setPr();renderEl()}});
       $('prnew').onclick=function(){var l=prList(),n=String(Math.max.apply(null,l.map(Number))+1);extraPr.push(n);curPr=n;setPr();renderEl()};
       if($('prdel'))$('prdel').onclick=function(){
