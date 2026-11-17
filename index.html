@@ -731,6 +731,10 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
       if(!ev.length)return;
       h+='<div class="od"><span>'+esc(D.full)+' · '+ev.length+' presentazioni</span><br>mattina '+(mat?hmin(mat):'—')+' · pomeriggio '+(pom?hmin(pom):'—')+' · totale '+hmin(mat+pom)+'</div>';
     });
+    var du={1:{},2:{},3:{}};prova.forEach(function(e){var p=pOf(e),k=Math.min(3,Math.max(1,mems(p?p.nome:'').length));du[k][e.dur]=1});
+    var lab={1:'solo',2:'gruppo da 2',3:'gruppo da 3'},t=[];
+    [1,2,3].forEach(function(k){var v=Object.keys(du[k]).map(Number).sort(function(a,b){return a-b});if(v.length)t.push(lab[k]+' '+v.join('/')+' min')});
+    if(t.length)h+='<div class="od"><span>Tempo per presentazione</span><br>'+t.join(' · ')+'</div>';
     return '<div class="note ore">'+h+'</div>';
   }
   function provaHtml(){
