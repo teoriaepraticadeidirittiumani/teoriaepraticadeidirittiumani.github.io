@@ -418,7 +418,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     });
     return g;
   }
-  /* calendario diviso: Mattina (mer e gio) e Pomeriggio (solo mer; gio compare solo se c'è qualcuno) */
+  /* calendario diviso: Mattina e Pomeriggio, entrambe con mer e gio */
   function buildSplit(cfg){
     var w=document.createElement('div'),from=cfg.from||8*60,to=Math.max(cfg.to||window.__TO,19*60),M1=13*60,M2=14*60;
     var all=[0,1].map(function(d){return cfg.items(d).filter(function(x){return !x.full})});
@@ -427,7 +427,7 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
     w.appendChild(lb('Mattina'));
     w.appendChild(buildGrid(Object.assign({},cfg,{from:from,to:M1,days:[0,1]})));
     if(M1<to){
-      var pd=[0];if(all[1].some(function(x){return x.start>=M1}))pd.push(1);
+      var pd=[0,1];
       w.appendChild(lb('Pomeriggio'));
       w.appendChild(buildGrid(Object.assign({},cfg,{from:M2,to:to,days:pd})));
     }
