@@ -32,6 +32,7 @@ h1{font-size:1.3rem;font-weight:bold;line-height:1.3;margin:6px 4px 6px}
 .tag{font-size:15px;font-weight:bold;line-height:1.35;margin:6px 4px 6px;white-space:nowrap}
 .page[hidden]{display:none}
 .cal{display:grid;grid-template-columns:40px repeat(2,1fr);border-top:1px solid var(--line)}
+.calsum{margin:6px 4px 4px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:.88rem;line-height:1.4}.calsum>div+div{margin-top:6px}.calsum span{color:var(--mute)}.calsum small{display:block;margin-top:6px;color:var(--mute);font-size:.72rem}
 .seclb{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin:18px 4px 6px}
 .head{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:3;text-align:center;padding:8px 0 6px;border-bottom:1px solid var(--line)}
 .head .w{font-size:.72rem;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
@@ -506,6 +507,17 @@ button.vis{border:1px solid var(--acc);background:var(--accbg);color:var(--acc);
   }
   function render(){
     var cal=$('cal');cal.innerHTML='';
+    if(admin){
+      var sm='';
+      DAYS.slice(0,2).forEach(function(D,d){
+        var ev=bookings.filter(function(b){return b.day===d}).concat(assegnati.filter(function(x){return x.day===d})),mat=0,pom=0;
+        ev.forEach(function(e){if(e.start<13*60)mat+=e.dur;else pom+=e.dur});
+        if(!ev.length)return;
+        var q=[];if(mat)q.push('mattina '+hmin(mat));if(pom)q.push('pomeriggio '+hmin(pom));
+        sm+='<div><b>'+esc(D.full)+' · '+ev.length+' presentazion'+(ev.length===1?'e':'i')+'</b><br><span>'+q.join(' · ')+'</span></div>';
+      });
+      if(sm){var bx=document.createElement('div');bx.className='calsum';bx.innerHTML=sm+'<small>Visibile solo con la password</small>';cal.appendChild(bx)}
+    }
     cal.appendChild(buildSplit({rh:RH,small:false,
       items:function(d){var o=chiusure.filter(function(c){return c.day===d}).map(function(c){return {start:c.start,dur:c.end-c.start,full:true,cls:'blk tap',info:{blk:true,day:c.day,start:c.start,dur:c.end-c.start},html:'Slot non disponibile'}});
         o=o.concat(bookings.filter(function(b){return b.day===d}).map(function(b){return {start:b.start,dur:b.dur,cls:'tap',info:{name:b.name,topic:b.topic,day:b.day,start:b.start,dur:b.dur,matr:matricole[b.id]||''},html:'<b>'+esc(b.name)+'</b>'+(b.topic?' · '+esc(b.topic):'')}}));
